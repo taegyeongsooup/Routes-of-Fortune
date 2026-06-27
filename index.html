@@ -949,7 +949,7 @@
         // 8 Ships Initial Configurations (Includes Captain and Cargo Img links placeholder)
         const baseShips = {
             A: { id: "A", name: "산타 마리아 호", captain: "디아스 선장", cargo: "후추", destination: "인도 코친", baseProb: 70, currentProb: 70, baseMult: 1.5, currentMult: 1.5, isUnethical: false, icon: "fa-seedling", bg: "from-emerald-950/50 to-emerald-900/10", border: "border-emerald-800/60", badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", history: [50], captainImg: "captain_A.jpg", goodsImg: "goods_A.jpg", flagImg: "flag_A.png", routeImg: "route_A.jpg" },
-            B: { id: "B", name: "골든 하인드 호(해적 선단)", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 40, currentProb: 40, baseMult: 3.0, currentMult: 3.0, isUnethical: false, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png", routeImg: "route_B.jpg" },
+            B: { id: "B", name: "골든 하인드 호", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 40, currentProb: 40, baseMult: 3.0, currentMult: 3.0, isUnethical: false, isPirate: true, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png", routeImg: "route_B.jpg" },
             C: { id: "C", name: "엘카노의 전함", captain: "엘카노 선장", cargo: "은괴", destination: "페루 포토시", baseProb: 60, currentProb: 60, baseMult: 2.0, currentMult: 2.0, isUnethical: false, icon: "fa-coins", bg: "from-cyan-950/50 to-cyan-900/10", border: "border-cyan-800/60", badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", history: [50], captainImg: "captain_C.jpg", goodsImg: "goods_C.jpg", flagImg: "flag_C.png", routeImg: "route_C.jpg" },
             D: { id: "D", name: "산 프란시스코 호", captain: "고메스 선장", cargo: "감자", destination: "신대륙 연안", baseProb: 80, currentProb: 80, baseMult: 1.2, currentMult: 1.2, isUnethical: false, icon: "fa-wheat-awn", bg: "from-amber-950/50 to-amber-900/10", border: "border-amber-800/60", badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20", history: [50], captainImg: "captain_D.jpg", goodsImg: "goods_D.jpg", flagImg: "flag_D.png", routeImg: "route_D.jpg" },
             E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "카리브해 농장", baseProb: 50, currentProb: 50, baseMult: 4.5, currentMult: 4.5, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
@@ -1818,7 +1818,8 @@
         // 예고된 후보 중, 부여된 확률(가중치)에 따라 실제로 발생할 다음 상황 1개를 추첨
         function drawWeightedSituation() {
             if (currentForecastPool.length === 0) {
-                return situations.find(s => !usedSituationTitles.has(s.title)) || situations[0];
+                const fallback = situations.find(s => !usedSituationTitles.has(s.title)) || situations[0];
+                return { situation: fallback, index: situations.indexOf(fallback) };
             }
             // 이미 사용된 상황 제외
             const available = currentForecastPool.filter(p => !usedSituationTitles.has(p.situation.title));
@@ -1831,7 +1832,7 @@
                 roll -= p.weight;
             }
             usedSituationTitles.add(chosen.title);
-            return chosen;
+            return { situation: chosen, index: situations.indexOf(chosen) };
         }
 
         function renderForecastCards() {
@@ -1999,7 +2000,7 @@
                 closeBtn.classList.remove('hidden');
                 closeBtn.innerText = "상황 대처하기 (투자창 열기)";
 
-                const sit = drawWeightedSituation();
+                const { situation: sit, index: sitIndex } = drawWeightedSituation();
 
                 titleEl.innerHTML = `<span class="text-amber-700 block text-sm font-black uppercase tracking-widest"><i class="fa-solid fa-newspaper"></i> 세계 정세 신문 기사</span>${sit.title}`;
 
@@ -2010,9 +2011,9 @@
                 sit.impact(ships);
 
                 // 정세 변화 발생 시 메인 외 다른 7척 포함 모든 선박의 가치 동반 자동 변동
-                applyGlobalMarketFluctuations(sit.mainShip);
+                applyGlobalMarketFluctuations(sit.mainShip, sitIndex);
                 // 추가 글로벌 변동 (더 극적인 시세 변화)
-                applyGlobalMarketFluctuations(null);
+                applyGlobalMarketFluctuations(null, sitIndex);
 
                 // 값 하한선 상한선 정렬
                 for (const shipId in ships) {
@@ -2075,21 +2076,57 @@
         }
 
         // 정세이든 전 선박의 시세에 유기적으로 무작위 마찰 계수 영향 발생시킴
-        function applyGlobalMarketFluctuations(excludeShipId) {
+        // 이벤트별 보호 선박 맵: 해당 이벤트 호재/악재 취지에 맞게 글로벌 노이즈 방향 고정
+        const SITUATION_SHIP_PROTECTION = {
+            0:  {"A": "pos", "B": "pos"},
+            1:  {"H": "neg", "A": "pos", "B": "pos", "F": "pos"},
+            2:  {"C": "pos"},
+            3:  {"E": "neg", "H": "neg"},
+            4:  {"E": "neg"},
+            5:  {"F": "pos", "B": "pos"},
+            6:  {"D": "pos"},
+            7:  {"G": "pos"},
+            8:  {"F": "neg"},
+            9:  {"B": "pos"},
+            10: {"C": "neg"},
+            11: {"F": "pos"},
+            12: {"H": "neg"},
+            14: {"A": "neg"},
+            15: {"D": "pos"},
+            18: {"A": "neg", "H": "pos"},
+            19: {"B": "neg", "G": "neg"},
+            20: {"E": "neg"},
+            21: {"A": "pos"},
+            22: {"G": "pos", "C": "pos"},
+            23: {"D": "pos"},
+            24: {"F": "neg"},
+            25: {"H": "pos"},
+            27: {"C": "neg"},
+            28: {"C": "neg"},
+            29: {"H": "pos"},
+        };
+
+        function applyGlobalMarketFluctuations(excludeShipId, sitIndex) {
+            const protection = (sitIndex !== undefined && sitIndex !== null)
+                ? (SITUATION_SHIP_PROTECTION[sitIndex] || {})
+                : {};
             for (const shipId in ships) {
                 if (shipId === excludeShipId) continue;
                 if (ships[shipId]._ruined) continue;
-                
-                // 확률 변동: -5 ~ +7 (상승 우세 비대칭)
-                const probDelta = Math.floor(Math.random() * 13) - 5;
-                ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
 
+                // 확률 변동: -6 ~ +7 (상승 우세 비대칭)
+                // 이벤트 관련 선박은 글로벌 노이즈 방향을 이벤트 취지에 맞게 고정
+                let probDelta = Math.floor(Math.random() * 14) - 6;
+                if (protection[shipId] === 'pos') probDelta = Math.abs(probDelta);
+                else if (protection[shipId] === 'neg') probDelta = -Math.abs(probDelta);
+
+                ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
                 if (ships[shipId].currentProb <= 0) {
                     ships[shipId].currentProb = 0;
                     ships[shipId]._ruined = true;
                 }
 
-                // 배율 변동: -0.3 ~ +0.3 (소폭 완화)
+                // 배율 변동: -0.3 ~ +0.3
                 const multDelta = (Math.random() * 0.6 - 0.3);
                 ships[shipId].currentMult = Math.max(0.3, Math.round((ships[shipId].currentMult + multDelta) * 10) / 10);
             }
@@ -2122,7 +2159,7 @@
             const feedback = currentActiveEvent.action(effectiveChoice);
             
             // 전 모든 선박의 가치 동반 미세 변동 발생
-            applyGlobalMarketFluctuations(null);
+            applyGlobalMarketFluctuations(null, null);
 
             for (const shipId in ships) {
                 ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb));
@@ -2224,6 +2261,8 @@
                 const unethicalOverlay = ''; // 노예선 배지는 선박명 옆 인라인으로 이동
                 const unethicalBadge = s.isUnethical
                     ? `<span class="text-[9px] font-black px-1 py-0.5 rounded animate-pulse flex-shrink-0" style="background:rgba(136,19,55,0.85);color:#fda4af;border:1px solid rgba(244,63,94,0.4);">⚠️ 노예선</span>`
+                    : s.isPirate
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded animate-pulse flex-shrink-0" style="background:rgba(30,20,0,0.85);color:#fbbf24;border:1px solid rgba(245,158,11,0.5);">☠️ 해적선</span>`
                     : '';
                 const ruinedOverlay = s._ruined
                     ? `<div class="absolute inset-0 bg-slate-950/80 flex items-center justify-center z-20 rounded-xl">
@@ -3111,7 +3150,7 @@
 
             const ranking = Object.values(studentMap)
                 .map(s => ({ ...s, count: s.titles.size, titles: s.titleList }))
-                .sort((a, b) => b.count - a.count)
+                .sort((a, b) => b.level !== a.level ? b.level - a.level : b.maxAssets - a.maxAssets)
                 .slice(0, 10);
 
             const gradeColors = { SS:'#f59e0b', S:'#a78bfa', A:'#34d399', B:'#60a5fa', C:'#9ca3af' };
