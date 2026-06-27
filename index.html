@@ -317,10 +317,23 @@
             #screen-results { max-height: none !important; padding: 12px; }
         }
 
-        /* 헤더 */
-        @media (max-width: 640px) {
-            #main-header { padding: 8px 12px; height: auto; min-height: 52px; }
-            #main-header .header-title { font-size: 13px; }
+        /* 헤더 모바일 */
+        @media (max-width: 1023px) {
+            #main-header {
+                height: auto !important;
+                min-height: 52px;
+                padding: 8px 12px !important;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            #main-header .header-title { font-size: 13px !important; }
+            #main-header .max-w-7xl { flex-wrap: wrap; gap: 6px; }
+            #main-header .flex.items-center.gap-3 { flex-wrap: wrap; gap: 6px; }
+            #main-header .rounded-lg { padding: 4px 8px; font-size: 11px; }
+        }
+        @media (max-width: 480px) {
+            #main-header .header-title { font-size: 11px !important; }
+            #main-header p { display: none; }
         }
 
         /* 신문 모달 */
@@ -1528,7 +1541,8 @@
         // ----------------------------------------------------
         // STOCK TRANSACTION CONTROL (1주 단위 매수/매도, 평단가 추적)
         // ----------------------------------------------------
-        function buyShares(shipId) {
+        function buyShares(shipId, qty) {
+            qty = Math.max(1, parseInt(qty) || 1);
             const currentPrice = calculateSharePrice(ships[shipId]);
 
             if (cash < currentPrice) {
@@ -1536,17 +1550,22 @@
                 return;
             }
 
+            // 살 수 있는 최대 수량으로 제한
+            const maxQty = Math.floor(cash / currentPrice);
+            qty = Math.min(qty, maxQty);
+            if (qty <= 0) return;
+
             if (ships[shipId].isUnethical) {
-                totalInvestedInUnethical += currentPrice;
+                totalInvestedInUnethical += currentPrice * qty;
                 hasUnethicalInvestedNow = true;
             }
 
-            // 1주 매수 처리
-            cash -= currentPrice;
-            totalCostBasis[shipId] += currentPrice;
-            portfolio[shipId] += 1;
+            // qty주 매수 처리
+            cash -= currentPrice * qty;
+            totalCostBasis[shipId] += currentPrice * qty;
+            portfolio[shipId] += qty;
             avgCost[shipId] = totalCostBasis[shipId] / portfolio[shipId];
-            buyActionCount++;
+            buyActionCount += qty;
 
             const totalWealth = calculateTotalAssets();
             const shipAssetVal = portfolio[shipId] * currentPrice;
@@ -1560,20 +1579,22 @@
             updateUI();
         }
 
-        function sellShares(shipId) {
+        function sellShares(shipId, qty) {
+            qty = Math.max(1, parseInt(qty) || 1);
             if (portfolio[shipId] <= 0) {
                 showCustomAlert("보유하고 계신 이 선단의 주식이 없습니다!");
                 return;
             }
 
+            qty = Math.min(qty, portfolio[shipId]);
             const currentPrice = calculateSharePrice(ships[shipId]);
 
-            // 1주 매도 처리 (평단가 비례 차감)
+            // qty주 매도 처리 (평단가 비례 차감)
             const costPerShare = avgCost[shipId];
-            portfolio[shipId] -= 1;
-            totalCostBasis[shipId] -= costPerShare;
-            cash += currentPrice;
-            sellActionCount++;
+            portfolio[shipId] -= qty;
+            totalCostBasis[shipId] -= costPerShare * qty;
+            cash += currentPrice * qty;
+            sellActionCount += qty;
 
             if (portfolio[shipId] <= 0.0001) {
                 portfolio[shipId] = 0;
@@ -2153,11 +2174,23 @@
                                 <span class="font-mono font-bold ${pnlClass}">${pnlText}</span>
                             </div>
 
+                            <!-- 수량 입력 + 매수/매도 -->
+                            <div class="flex items-center gap-1 mb-1 text-[11px]">
+                                <span class="text-slate-500 flex-shrink-0" style="color:#7a5c2e;">수량</span>
+                                <input type="number" id="qty-${shipId}" min="1" value="1"
+                                    style="width:52px;background:rgba(255,255,255,0.6);border:1px solid rgba(139,90,43,0.4);border-radius:6px;padding:2px 4px;text-align:center;font-weight:700;color:#1a0f00;font-size:11px;"
+                                    oninput="this.value=Math.max(1,Math.floor(this.value)||1); document.getElementById('cost-${shipId}').textContent=(parseInt(this.value)||1)*calculateSharePrice(ships['${shipId}'])+'레알';">
+                                <button onclick="(function(){ const p=calculateSharePrice(ships['${shipId}']); const m=Math.floor(cash/p); if(m>0){document.getElementById('qty-${shipId}').value=m; document.getElementById('cost-${shipId}').textContent=m*p+'레알';} else{showCustomAlert('현금이 부족합니다!');} })()"
+                                    style="background:rgba(200,150,12,0.20);color:#7c3a00;border:1px solid rgba(200,150,12,0.4);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:700;cursor:pointer;">
+                                    최대
+                                </button>
+                                <span id="cost-${shipId}" class="font-bold" style="color:#b45309;font-size:10px;">${calculateSharePrice(s)}레알</span>
+                            </div>
                             <div class="flex gap-1 text-[13px]">
-                                <button onclick="buyShares('${shipId}')" style="background:linear-gradient(135deg,#7a4a1a,#a06820);color:#f5edd6;border:1px solid rgba(200,150,12,0.4);" class="flex-1 py-1.5 rounded-lg font-bold transition duration-150 flex items-center justify-center gap-0.5 active:scale-95 hover:brightness-110">
+                                <button onclick="buyShares('${shipId}', parseInt(document.getElementById('qty-${shipId}').value)||1)" style="background:linear-gradient(135deg,#7a4a1a,#a06820);color:#f5edd6;border:1px solid rgba(200,150,12,0.4);" class="flex-1 py-1.5 rounded-lg font-bold transition duration-150 flex items-center justify-center gap-0.5 active:scale-95 hover:brightness-110">
                                     <i class="fa-solid fa-plus text-[9px]"></i> 매수
                                 </button>
-                                <button onclick="sellShares('${shipId}')" style="${!isOwned ? 'opacity:0.4;pointer-events:none;' : ''}background:rgba(44,26,4,0.25);color:#5c3d11;border:1px solid rgba(92,61,17,0.35);" class="flex-1 py-1.5 rounded-lg font-bold transition duration-150 flex items-center justify-center gap-0.5 active:scale-95 hover:brightness-110" ${!isOwned ? 'disabled' : ''}>
+                                <button onclick="sellShares('${shipId}', parseInt(document.getElementById('qty-${shipId}').value)||1)" style="${!isOwned ? 'opacity:0.4;pointer-events:none;' : ''}background:rgba(44,26,4,0.25);color:#5c3d11;border:1px solid rgba(92,61,17,0.35);" class="flex-1 py-1.5 rounded-lg font-bold transition duration-150 flex items-center justify-center gap-0.5 active:scale-95 hover:brightness-110" ${!isOwned ? 'disabled' : ''}>
                                     <i class="fa-solid fa-minus text-[9px]"></i> 매도
                                 </button>
                                 <button onclick="sellAllOfShip('${shipId}')" style="${!isOwned ? 'opacity:0.4;pointer-events:none;' : ''}background:#991b1b;color:#fff;border:1px solid #7f1d1d;" class="px-1.5 py-1.5 rounded-lg text-[10px] font-bold transition duration-150 active:scale-95 hover:brightness-110" title="전액매도" ${!isOwned ? 'disabled' : ''}>
@@ -2492,11 +2525,15 @@
             const tagLabels = { A:'자산', B:'업적', C:'선박', D:'매매', E:'도덕', F:'특별', Z:'' };
             const tagColors = { A:'#b45309', B:'#0f766e', C:'#7c3aed', D:'#1d4ed8', E:'#15803d', F:'#9f1239', Z:'#6b7280' };
             titlesContainer.innerHTML = earnedTitles.map(function(t, i) {
-                return '<div class="flex items-start gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.25); border:1px solid rgba(139,90,43,0.20);">'
-                    + '<span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5" style="background:' + tagColors[t.tag] + '22; color:' + tagColors[t.tag] + '; border:1px solid ' + tagColors[t.tag] + '44;">' + (tagLabels[t.tag] || '') + '</span>'
-                    + '<div class="text-left">'
-                    + '<div class="font-black text-sm" style="color:' + (i === 0 ? '#b45309' : '#5c3d11') + ';">' + t.title + '</div>'
-                    + '<div class="text-[11px] leading-snug mt-0.5" style="color:#7a5c2e;">' + t.desc + '</div>'
+                const bgColor = i === 0 ? 'rgba(251,243,219,0.95)' : 'rgba(255,255,255,0.80)';
+                const borderColor = i === 0 ? 'rgba(200,150,12,0.60)' : 'rgba(139,90,43,0.25)';
+                const titleColor = i === 0 ? '#7c2d12' : '#3d1a00';
+                const descColor = i === 0 ? '#92400e' : '#5c3d11';
+                return '<div class="flex items-start gap-2 p-2.5 rounded-lg mb-1" style="background:' + bgColor + '; border:2px solid ' + borderColor + ';">'
+                    + '<span class="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5" style="background:' + tagColors[t.tag] + '; color:#fff; min-width:28px; text-align:center;">' + (tagLabels[t.tag] || '') + '</span>'
+                    + '<div class="text-left flex-1">'
+                    + '<div class="font-black text-[13px]" style="color:' + titleColor + ';">' + (i === 0 ? '⭐ ' : '') + t.title + '</div>'
+                    + '<div class="text-[11px] leading-snug mt-0.5" style="color:' + descColor + ';">' + t.desc + '</div>'
                     + '</div></div>';
             }).join('');
 
@@ -2771,6 +2808,9 @@
                 });
         }
 
+        // 등급 우선순위 (높을수록 좋음)
+        const GRADE_ORDER = { 'SS': 5, 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
+
         function renderHallOfFame(records) {
             const listEl = document.getElementById('hall-of-fame-list');
             if (!Array.isArray(records) || records.length === 0) {
@@ -2778,16 +2818,27 @@
                 return;
             }
 
-            // 학생별로 보유한 "고유 칭호 개수"를 집계하여 TOP10 산출
             const studentMap = {};
             records.forEach(r => {
                 const key = `${r.playerClass}-${r.playerNumber}-${r.playerName}`;
                 if (!studentMap[key]) {
-                    studentMap[key] = { name: r.playerName, cls: r.playerClass, num: r.playerNumber, titles: new Set(), titleList: [] };
+                    studentMap[key] = {
+                        name: r.playerName, cls: r.playerClass, num: r.playerNumber,
+                        titles: new Set(), titleList: [], bestGrade: 'C'
+                    };
                 }
-                if (!studentMap[key].titles.has(r.title)) {
-                    studentMap[key].titles.add(r.title);
-                    studentMap[key].titleList.push(r.title);
+                // 고유 칭호 누적
+                const titles = Array.isArray(r.titles) ? r.titles : (r.title ? [r.title] : []);
+                titles.forEach(t => {
+                    if (t && !studentMap[key].titles.has(t)) {
+                        studentMap[key].titles.add(t);
+                        studentMap[key].titleList.push(t);
+                    }
+                });
+                // 최고 등급 갱신
+                const g = r.grade || 'C';
+                if ((GRADE_ORDER[g] || 0) > (GRADE_ORDER[studentMap[key].bestGrade] || 0)) {
+                    studentMap[key].bestGrade = g;
                 }
             });
 
@@ -2796,19 +2847,35 @@
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 10);
 
+            const gradeColors = { SS:'#f59e0b', S:'#a78bfa', A:'#34d399', B:'#60a5fa', C:'#9ca3af' };
+
             listEl.innerHTML = ranking.map((s, idx) => {
                 const titlesArr = Array.isArray(s.titles) ? s.titles : [];
-                const latestTitle = titlesArr[titlesArr.length - 1] || '-';
+                // 최근 3개 칭호 (뱃지)
+                const recent3 = titlesArr.slice(-3).reverse();
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}`;
+                const gradeColor = gradeColors[s.bestGrade] || '#9ca3af';
+                // 전체 칭호 hover tooltip
+                const allTitlesStr = titlesArr.join(' · ') || '없음';
+                const badgesHtml = recent3.map(t =>
+                    `<span style="background:rgba(200,150,12,0.15);color:#92400e;border:1px solid rgba(200,150,12,0.3);border-radius:4px;padding:1px 5px;font-size:9px;white-space:nowrap;">${t}</span>`
+                ).join('');
                 return `
-                <div class="rounded-lg px-2.5 py-1.5 mb-0.5" style="background:rgba(255,255,255,0.30); border:1px solid rgba(139,90,43,0.25);">
-                    <div class="flex items-center justify-between">
+                <div class="rounded-lg px-2.5 py-1.5 mb-1" style="background:rgba(255,255,255,0.30); border:1px solid rgba(139,90,43,0.25);">
+                    <div class="flex items-center justify-between mb-0.5">
                         <span class="text-[12px] font-bold flex items-center gap-1.5" style="color:#2c1a04;">
-                            <span class="w-5 text-center">${medal}</span> ${s.cls || s.playerClass}반 ${s.num || s.playerNumber}번 ${s.name || s.playerName}
+                            <span class="w-5 text-center">${medal}</span>
+                            ${s.cls || s.playerClass}반 ${s.num || s.playerNumber}번 ${s.name || s.playerName}
                         </span>
-                        <span class="text-[12px] font-bold" style="color:#b45309;">${s.count}개 칭호</span>
+                        <span class="text-[11px] font-black cursor-help relative group" style="color:${gradeColor};"
+                              title="${allTitlesStr}">
+                            ${s.count}개 칭호 ▾
+                        </span>
                     </div>
-                    <div class="text-[10px] mt-0.5 truncate" style="color:#7a5c2e; padding-left:20px;">최신: ${latestTitle}</div>
+                    <div class="flex items-center gap-1 flex-wrap" style="padding-left:20px;">
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:${gradeColor}22;color:${gradeColor};border:1px solid ${gradeColor}44;">${s.bestGrade}등급</span>
+                        ${badgesHtml}
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -2848,6 +2915,8 @@
             shipMarketStatus = {};
 
             document.getElementById('screen-results').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-voyage').classList.add('hidden');
             document.getElementById('screen-lobby').classList.remove('hidden');
             document.getElementById('main-header').style.display = 'none';
 
