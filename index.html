@@ -907,7 +907,7 @@
         // 아래 URL을 본인의 Google Apps Script 웹앱 배포 URL로 교체하세요.
         // (Google Sheets > 확장 프로그램 > Apps Script 에서 webhook 코드를 배포한 뒤 "웹앱 URL"을 붙여넣으면
         //  게임 결과 제출 시 자동으로 칭호 기록이 시트에 누적되고, 로비 화면의 명예의 전당 TOP10도 이 URL에서 데이터를 읽어옵니다.)
-        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzeK_YRZlxwdylXVa9WU-oAOtBV2iVGEPijLf6fYrOZPOtpA_XgMRa_h4rWWfvcNg_u/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
+        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxAGq1N9ak_RV4mY0iOcYYF3yMAdJ8KvG5g7vZLu5QzGkMQQF48NmsV7MzH_bbQVmz2/exec"
 
         // ----------------------------------------------------
         // PLAYER IDENTITY (반 / 번호 / 이름)
@@ -948,14 +948,14 @@
 
         // 8 Ships Initial Configurations (Includes Captain and Cargo Img links placeholder)
         const baseShips = {
-            A: { id: "A", name: "산타 마리아 호", captain: "디아스 선장", cargo: "후추", destination: "인도 코친", baseProb: 70, currentProb: 70, baseMult: 1.5, currentMult: 1.5, isUnethical: false, icon: "fa-seedling", bg: "from-emerald-950/50 to-emerald-900/10", border: "border-emerald-800/60", badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", history: [50], captainImg: "captain_A.jpg", goodsImg: "goods_A.jpg", flagImg: "flag_A.png" },
-            B: { id: "B", name: "골든 하인드 호", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 40, currentProb: 40, baseMult: 3.0, currentMult: 3.0, isUnethical: false, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png" },
-            C: { id: "C", name: "엘카노의 전함", captain: "엘카노 선장", cargo: "은괴", destination: "페루 포토시", baseProb: 60, currentProb: 60, baseMult: 2.0, currentMult: 2.0, isUnethical: false, icon: "fa-coins", bg: "from-cyan-950/50 to-cyan-900/10", border: "border-cyan-800/60", badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", history: [50], captainImg: "captain_C.jpg", goodsImg: "goods_C.jpg", flagImg: "flag_C.png" },
-            D: { id: "D", name: "산 프란시스코 호", captain: "고메스 선장", cargo: "감자", destination: "신대륙 연안", baseProb: 80, currentProb: 80, baseMult: 1.2, currentMult: 1.2, isUnethical: false, icon: "fa-wheat-awn", bg: "from-amber-950/50 to-amber-900/10", border: "border-amber-800/60", badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20", history: [50], captainImg: "captain_D.jpg", goodsImg: "goods_D.jpg", flagImg: "flag_D.png" },
-            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "카리브해 농장", baseProb: 50, currentProb: 50, baseMult: 4.5, currentMult: 4.5, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png" },
-            F: { id: "F", name: "빅토리아 호", captain: "마젤란 선장", cargo: "비단", destination: "필리핀 항로", baseProb: 30, currentProb: 30, baseMult: 5.0, currentMult: 5.0, isUnethical: false, icon: "fa-scroll", bg: "from-purple-950/50 to-purple-900/10", border: "border-purple-800/60", badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20", history: [50], captainImg: "captain_F.jpg", goodsImg: "goods_F.jpg", flagImg: "flag_F.png" },
-            G: { id: "G", name: "이스파뇰라 호", captain: "코르테스 선장", cargo: "설탕", destination: "쿠바 식민지", baseProb: 65, currentProb: 65, baseMult: 1.8, currentMult: 1.8, isUnethical: false, icon: "fa-cubes-stacked", bg: "from-indigo-950/50 to-indigo-900/10", border: "border-indigo-800/60", badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", history: [50], captainImg: "captain_G.jpg", goodsImg: "goods_G.jpg", flagImg: "flag_G.png" },
-            H: { id: "H", name: "레반트의 별 호", captain: "피에트로 상인", cargo: "면직물", destination: "베네치아 항구", baseProb: 85, currentProb: 85, baseMult: 1.1, currentMult: 1.1, isUnethical: false, icon: "fa-shirt", bg: "from-slate-900 to-slate-900/40", border: "border-slate-800/60", badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20", history: [50], captainImg: "captain_H.jpg", goodsImg: "goods_H.jpg", flagImg: "flag_H.png" }
+            A: { id: "A", name: "산타 마리아 호", captain: "디아스 선장", cargo: "후추", destination: "인도 코친", baseProb: 70, currentProb: 70, baseMult: 1.5, currentMult: 1.5, isUnethical: false, icon: "fa-seedling", bg: "from-emerald-950/50 to-emerald-900/10", border: "border-emerald-800/60", badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", history: [50], captainImg: "captain_A.jpg", goodsImg: "goods_A.jpg", flagImg: "flag_A.png", routeImg: "route_A.jpg" },
+            B: { id: "B", name: "골든 하인드 호", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 40, currentProb: 40, baseMult: 3.0, currentMult: 3.0, isUnethical: false, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png", routeImg: "route_B.jpg" },
+            C: { id: "C", name: "엘카노의 전함", captain: "엘카노 선장", cargo: "은괴", destination: "페루 포토시", baseProb: 60, currentProb: 60, baseMult: 2.0, currentMult: 2.0, isUnethical: false, icon: "fa-coins", bg: "from-cyan-950/50 to-cyan-900/10", border: "border-cyan-800/60", badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", history: [50], captainImg: "captain_C.jpg", goodsImg: "goods_C.jpg", flagImg: "flag_C.png", routeImg: "route_C.jpg" },
+            D: { id: "D", name: "산 프란시스코 호", captain: "고메스 선장", cargo: "감자", destination: "신대륙 연안", baseProb: 80, currentProb: 80, baseMult: 1.2, currentMult: 1.2, isUnethical: false, icon: "fa-wheat-awn", bg: "from-amber-950/50 to-amber-900/10", border: "border-amber-800/60", badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20", history: [50], captainImg: "captain_D.jpg", goodsImg: "goods_D.jpg", flagImg: "flag_D.png", routeImg: "route_D.jpg" },
+            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "카리브해 농장", baseProb: 50, currentProb: 50, baseMult: 4.5, currentMult: 4.5, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
+            F: { id: "F", name: "빅토리아 호", captain: "마젤란 선장", cargo: "비단", destination: "필리핀 항로", baseProb: 30, currentProb: 30, baseMult: 5.0, currentMult: 5.0, isUnethical: false, icon: "fa-scroll", bg: "from-purple-950/50 to-purple-900/10", border: "border-purple-800/60", badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20", history: [50], captainImg: "captain_F.jpg", goodsImg: "goods_F.jpg", flagImg: "flag_F.png", routeImg: "route_F.jpg" },
+            G: { id: "G", name: "이스파뇰라 호", captain: "코르테스 선장", cargo: "설탕", destination: "쿠바 식민지", baseProb: 65, currentProb: 65, baseMult: 1.8, currentMult: 1.8, isUnethical: false, icon: "fa-cubes-stacked", bg: "from-indigo-950/50 to-indigo-900/10", border: "border-indigo-800/60", badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", history: [50], captainImg: "captain_G.jpg", goodsImg: "goods_G.jpg", flagImg: "flag_G.png", routeImg: "route_G.jpg" },
+            H: { id: "H", name: "레반트의 별 호", captain: "피에트로 상인", cargo: "면직물", destination: "베네치아 항구", baseProb: 85, currentProb: 85, baseMult: 1.1, currentMult: 1.1, isUnethical: false, icon: "fa-shirt", bg: "from-slate-900 to-slate-900/40", border: "border-slate-800/60", badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20", history: [50], captainImg: "captain_H.jpg", goodsImg: "goods_H.jpg", flagImg: "flag_H.png", routeImg: "route_H.jpg" }
         };
 
         // Deep copy of ships state
@@ -970,12 +970,12 @@
                 desc: "유럽 주요 도시에 전염병 돌풍이 불자 동양의 '후추'와 '정향'이 치료에 특효약이라는 민간 소문이 퍼지기 시작합니다.",
                 impact: (s) => {
                     s.A.currentMult += 0.5; s.A.currentProb += 5;
-                    s.B.currentMult += 1.0; s.B.currentProb -= 5;
+                    s.B.currentMult += 1.0; s.B.currentProb += 5;
                 }
             },
             {
                 title: "오스만 제국의 지중해 관세 인상",
-                desc: "지중해 패권을 잡은 오스만 제국이 이탈리아 상인들에게 막대한 전통 통행료와 세금을 요구하며 기존 육로가 봉쇄되었습니다.",
+                desc: "지중해 패권을 잡은 오스만 제국이 이탈리아 상인들에게 통행료와 세금을 요구하며 기존 무역로가 봉쇄되었습니다. 새로운 항로를 통한 무역의 가치가 커집니다.",
                 impact: (s) => {
                     s.H.currentProb -= 15; s.H.currentMult -= 0.1;
                     s.A.currentProb += 10; s.B.currentProb += 5; s.F.currentProb += 5;
@@ -990,21 +990,21 @@
             },
             {
                 title: "항구의 돌풍 및 일부 선박 파손",
-                desc: "서아프리카 및 지중해 연안을 급습한 태풍으로 많은 배들이 도크에서 수리 상태에 들어갑니다.",
+                desc: "서아프리카 및 지중해 연안을 급습한 태풍으로 많은 배들이 항구에서 수리 상태에 들어갑니다.",
                 impact: (s) => {
                     s.E.currentProb -= 15; s.H.currentProb -= 10;
                 }
             },
             {
                 title: "대서양 노예 사냥 규제안 통과 루머",
-                desc: "교황청과 에스파냐 황실 내부에서 원주민 및 일부 무역에 도덕적 가이드라인 제정을 논하기 시작했다는 정세 보고가 들어옵니다.",
+                desc: "교황청이 원주민 및 노예 무역에 도덕적 가이드라인 제정을 논의하기 시작했습니다. 노예 무역은 이제 위험해질 것입니다.",
                 impact: (s) => {
                     s.E.currentProb -= 10; s.E.currentMult -= 0.5;
                 }
             },
             {
                 title: "선원 괴혈병 특효약 '레몬즙' 배급",
-                desc: "오랜 항해에서 선원들이 괴혈병으로 쓰러지는 가운데 오렌지와 레몬 보급 활성화 대책이 수립됩니다.",
+                desc: "오랜 항해로 괴혈병에 시달리던 선원들이 오렌지와 레몬 보급으로 병에서 벗어납니다.",
                 impact: (s) => {
                     s.F.currentProb += 20; s.B.currentProb += 15;
                 }
@@ -1017,8 +1017,8 @@
                 }
             },
             {
-                title: "카리브해 사탕수수 풍작 및 사탕 붐",
-                desc: "유럽 귀족층 사이에 홍차와 과자에 감미료로 사탕수수 설탕을 듬뿍 넣는 '설탕 신드롬'이 대유행하기 시작합니다.",
+                title: "사탕수수 풍작과 설탕의 유행",
+                desc: "유럽 귀족층 사이에 홍차와 과자에 사탕수수 설탕을 듬뿍 넣는 '설탕 신드롬'이 대유행하기 시작합니다.",
                 impact: (s) => {
                     s.G.currentMult += 0.6; s.G.currentProb += 5;
                 }
@@ -1039,14 +1039,14 @@
             },
             {
                 title: "원주민 부족 연합의 은광산 포위",
-                desc: "신대륙의 급작스러운 침탈에 원주민 연합이 강력하게 반발하여 포토시 인근 채굴 기지를 야간 습격했습니다.",
+                desc: "신대륙의 급작스러운 침탈에 원주민 연합이 강력하게 반발하여 포토시 광산 채굴 기지를 야간에 습격했습니다.",
                 impact: (s) => {
                     s.C.currentProb -= 25;
                 }
             },
             {
                 title: "명나라 장벽 일시 완화 및 교역량 증가",
-                desc: "동방의 대제국 명나라가 일부 서구 해상 무역 세력에 포르투갈 마카오 입항권을 정식 인가하여 도자기 비단 교역로가 크게 개선됩니다.",
+                desc: "명나라가 포르투갈 상인의 마카오 입항을 허가하여 비단을 교역하는 경로가 대폭 축소되고 교역량이 증가합니다.",
                 impact: (s) => {
                     s.F.currentMult += 1.5; s.F.currentProb += 15;
                 }
@@ -1059,8 +1059,8 @@
                 }
             },
             {
-                title: "아프리카 서부 해변 기근 및 노예값 하락",
-                desc: "서아프리카 부족 전쟁이 극에 달하며 공급처에서 공급량이 과대 폭증해 노예 매입 가격이 헐값 수준으로 떨어졌습니다.",
+                title: "아프리카 노예 매입 가격 하락",
+                desc: "아프리카의 부족 전쟁이 극에 달하며 노예 매입 가격이 헐값 수준으로 떨어졌습니다.",
                 impact: (s) => {
                     s.E.currentMult += 1.0;
                 }
@@ -1081,42 +1081,42 @@
             },
             {
                 title: "설탕 대체 사탕수수 가공 신기술 확산",
-                desc: "유럽 무역 가공업자들이 사탕수수를 끓여 순도 높은 하얀 결정 설탕을 정제하는 공정을 한 단계 더 진화시켰습니다.",
+                desc: "사탕수수를 끓여 하얀 결정 설탕을 제작하는 방법을 발견했습니다.",
                 impact: (s) => {
                     s.G.currentMult += 0.3;
                 }
             },
             {
                 title: "동방 비단 직물 유입 과다로 단가 하락",
-                desc: "여러 루트를 통해 유입된 실크가 시중에 일시적으로 넘쳐 흘러 고급 비단직물의 평균 가격이 일시 하락했습니다.",
+                desc: "시장에 실크가 일시적으로 넘쳐 흘러 고급 비단의 가격이 일시 하락했습니다.",
                 impact: (s) => {
                     s.F.currentMult -= 0.8;
                 }
             },
             {
                 title: "베네치아 연합, 가짜 신항로 가치 하락 가짜뉴스 살포",
-                desc: "구 지중해 항로 권력을 쥔 베네치아 거상 연합이 '신대륙의 후추는 독을 품었다'는 유언비어를 은밀히 유통합니다.",
+                desc: "지중해 항로를 중심으로 활동하는 베네치아 거상 연합이 '신대륙에서 온 후추는 독을 품었다'는 유언비어를 은밀히 유통합니다.",
                 impact: (s) => {
                     s.A.currentMult -= 0.2; s.H.currentMult += 0.2;
                 }
             },
             {
                 title: "스페인 무적함대 카리브해 순찰 경계 강화",
-                desc: "밀무역과 도적질을 일삼는 사략선들을 척결하려 무적함대가 순찰을 시작해 모험 선박들의 꼬리가 밟히고 있습니다.",
+                desc: "밀무역과 도적질을 일삼는 해적선들을 척결하려 무적함대가 순찰을 시작해 모험 선박들의 꼬리가 밟히고 있습니다.",
                 impact: (s) => {
                     s.B.currentProb -= 15; s.G.currentProb -= 10;
                 }
             },
             {
                 title: "노예수송선 선내 폭동 및 통제 불능",
-                desc: "수송 도중 선상 감금 구역의 무리한 과밀화로 인해 성난 반란이 일어나 선원들이 크게 사망했습니다.",
+                desc: "배로 수송되던 노예들이 좁은 환경에 불만을 가지고 반란이 일으켜 선원들이 대부분 사망했습니다.",
                 impact: (s) => {
                     s.E.currentProb -= 20; s.E.currentMult -= 0.5;
                 }
             },
             {
                 title: "디아스 선장, 희망봉 주변 이상 조류 극복",
-                desc: "베테랑 디아스 선장이 폭풍의 전진기지인 아프리카 최남단 희망봉 근처의 최악의 난조류를 완벽히 매핑해 안정적 우회로를 찾았습니다.",
+                desc: "베테랑 디아스 선장이 아프리카 최남단 희망봉 근처의 최악의 난조류를 완벽히 극복하는 안정적 우회로를 찾았습니다.",
                 impact: (s) => {
                     s.A.currentProb += 15;
                 }
@@ -1158,7 +1158,7 @@
             },
             {
                 title: "신대륙 은 수송선 해상 기습 나포 성공",
-                desc: "사략선단이 은을 한가득 싣고 귀환하던 에스파냐 수송선을 통째로 사로잡았다는 영웅 무용담이 펍에서 들려옵니다.",
+                desc: "해적선단이 은을 한가득 싣고 귀환하던 에스파냐 수송선을 통째로 사로잡았다는 영웅 무용담이 펍에서 들려옵니다.",
                 impact: (s) => {
                     s.B.currentMult += 1.0; s.C.currentProb -= 10;
                 }
@@ -1953,6 +1953,9 @@
             const closeBtn = document.getElementById('btn-close-newspaper');
 
             overlay.classList.remove('hidden');
+            // 이전에 삽입된 자금부족 경고 div 제거
+            const prevWarning = document.getElementById('cash-shortage-warning');
+            if (prevWarning) prevWarning.remove();
             dateEl.innerText = `연도: ${1500 + currentRound * 3}년`;
 
             if (isFirstPrep) {
@@ -2077,8 +2080,8 @@
                 if (shipId === excludeShipId) continue;
                 if (ships[shipId]._ruined) continue;
                 
-                // 확률 변동: -8 ~ +8
-                const probDelta = Math.floor(Math.random() * 17) - 8;
+                // 확률 변동: -5 ~ +7 (상승 우세 비대칭)
+                const probDelta = Math.floor(Math.random() * 13) - 5;
                 ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
 
                 if (ships[shipId].currentProb <= 0) {
@@ -2107,8 +2110,11 @@
                     if (cash < required) {
                         effectiveChoice = 2;
                         // 알림
-                        document.getElementById('news-modal-desc').insertAdjacentHTML('beforebegin', 
-                            '<div style="color:#f87171;font-weight:bold;font-size:12px;margin-bottom:6px;">⚠️ 자금 부족으로 자동으로 [선택 2]가 집행됩니다.</div>');
+                        const warn = document.createElement('div');
+                        warn.id = 'cash-shortage-warning';
+                        warn.style.cssText = 'color:#f87171;font-weight:bold;font-size:12px;margin-bottom:6px;';
+                        warn.textContent = '⚠️ 자금 부족으로 자동으로 [선택 2]가 집행됩니다.';
+                        document.getElementById('news-modal-desc').insertAdjacentElement('beforebegin', warn);
                     }
                 }
             }
@@ -2249,7 +2255,7 @@
                                         <h4 class="font-bold text-[14px] leading-tight" style="color:#1a0f00;">${s.name}</h4>
                                         ${unethicalBadge}
                                     </div>
-                                    <p class="text-[10px] truncate" style="color:#7a5c2e;">${s.captain}</p>
+
                                 </div>
                             </div>
 
@@ -2276,6 +2282,10 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- 경로 보기 버튼 -->
+                            <button onclick="showRouteModal('${shipId}')" class="w-full text-[10px] font-bold rounded-md py-0.5 mb-1 flex items-center justify-center gap-1 transition-all" style="background:rgba(44,26,4,0.13);border:1px solid rgba(139,90,43,0.30);color:#7a5c2e;" onmouseover="this.style.background='rgba(200,150,12,0.18)';this.style.color='#b45309';" onmouseout="this.style.background='rgba(44,26,4,0.13)';this.style.color='#7a5c2e';">
+                                <i class="fa-solid fa-map-location-dot"></i> 항해 경로 보기
+                            </button>
 
                             <!-- Ship Core Metrics -->
                             <div class="grid grid-cols-2 gap-y-0.5 gap-x-1 border-t border-b border-slate-800/50 py-1 mb-1 text-[11px] lg:text-[12px]">
@@ -2924,6 +2934,10 @@
             }
             const pwKey = `aov_pw_${data.playerClass}_${data.playerNumber}_${data.playerName}`;
             const pw = localStorage.getItem(pwKey) || '';
+            // 칭호 배열 정리 (중복 제거)
+            const titlesArray = Array.isArray(data.titles) && data.titles.length > 0
+                ? [...new Set(data.titles)]
+                : (data.allTitles ? [...new Set(data.allTitles.split(' / ').map(s => s.trim()).filter(Boolean))] : [data.title]);
             const payload = {
                 timestamp: new Date().toISOString(),
                 playerClass: data.playerClass,
@@ -2931,9 +2945,8 @@
                 playerName: data.playerName,
                 password: pw,
                 finalAssets: data.finalAssets,
-                title: data.title,
-                allTitles: data.allTitles || data.title,
-                grade: data.grade
+                grade: data.grade,
+                titles: titlesArray   // 배열로 전송 → 앱스크립트에서 가로 열로 저장
             };
             fetch(SHEET_WEBHOOK_URL, {
                 method: 'POST',
@@ -2942,7 +2955,7 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 if (statusEl) {
-                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> 칭호 "${data.title}" 기록이 명부에 제출되었습니다!`;
+                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${titlesArray.length}개 칭호 기록이 명부에 제출되었습니다!`;
                     statusEl.className = "bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
                 }
             }).catch(() => {
@@ -3330,6 +3343,48 @@
             {title:"평범한 시장의 관찰자", rarity:1},
         ];
 
+        function showRouteModal(shipId) {
+            const s = ships[shipId];
+            if (!s) return;
+            const existing = document.getElementById('route-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'route-modal';
+            modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;padding:16px;';
+
+            const imgSrc = s.routeImg || '';
+            modal.innerHTML =
+              '<div style="background:linear-gradient(145deg,#2c1a04,#1a0f00);border:2px solid rgba(200,150,12,0.45);border-radius:16px;width:100%;max-width:560px;overflow:hidden;display:flex;flex-direction:column;">'
+            + '<div style="padding:12px 16px;border-bottom:1px solid rgba(139,90,43,0.30);display:flex;align-items:center;justify-content:space-between;">'
+            +   '<div>'
+            +     '<div style="font-size:11px;color:#9e7a4a;font-weight:700;margin-bottom:2px;"><i class="fa-solid fa-map-location-dot" style="color:#c8960c;margin-right:4px;"></i>항해 경로</div>'
+            +     '<div style="font-weight:900;font-size:15px;color:#e8d5a3;">' + s.name + '</div>'
+            +     '<div style="font-size:11px;color:#7a5c2e;margin-top:1px;">' + s.captain + ' &nbsp;·&nbsp; ' + s.destination + '</div>'
+            +   '</div>'
+            +   '<button onclick="document.getElementById(&quot;route-modal&quot;).remove()" style="font-size:20px;color:#7a5c2e;background:none;border:none;cursor:pointer;padding:0 4px;line-height:1;">✕</button>'
+            + '</div>'
+            + '<div style="padding:12px;display:flex;align-items:center;justify-content:center;min-height:200px;background:rgba(0,0,0,0.3);">'
+            +   (imgSrc
+            ?     '<img id="route-img-' + shipId + '" src="' + imgSrc + '" alt="항해 경로" style="max-width:100%;max-height:420px;object-fit:contain;border-radius:8px;border:1px solid rgba(139,90,43,0.25);">'
+            :     '<div style="color:#7a5c2e;font-size:13px;text-align:center;padding:32px;"><i class="fa-solid fa-map" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.4;"></i>경로 이미지 준비 중<br><span style="font-size:10px;opacity:0.6;">route_' + shipId + '.jpg 파일을 추가해 주세요.</span></div>'
+            )
+            + '</div>'
+            + '</div>';
+
+            document.body.appendChild(modal);
+            modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+            // 이미지 로드 실패 처리
+            if (imgSrc) {
+                var img = document.getElementById('route-img-' + shipId);
+                if (img) {
+                    img.addEventListener('error', function() {
+                        this.outerHTML = '<div style="color:#7a5c2e;font-size:13px;text-align:center;padding:32px;"><i class="fa-solid fa-image" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.4;"></i>이미지를 불러올 수 없습니다.<br><span style="font-size:10px;opacity:0.6;">route_' + shipId + '.jpg 파일을 확인해 주세요.</span></div>';
+                    });
+                }
+            }
+        }
+
         function showMyTitles() {
             const cls = document.getElementById('input-player-class').value.trim();
             const num = document.getElementById('input-player-number').value.trim();
@@ -3341,48 +3396,70 @@
             const storedPw = localStorage.getItem(pwKey);
             if (storedPw && storedPw !== pw) { alert("비밀번호가 맞지 않습니다!"); return; }
 
-            const key = `aov_titles_${cls}_${num}_${name}`;
-            let myTitleSet = new Set();
+            // 로컬 칭호 (오프라인 폴백용)
+            const localKey = `aov_titles_${cls}_${num}_${name}`;
+            let localTitleSet = new Set();
             try {
-                const stored = JSON.parse(localStorage.getItem(key) || '[]');
-                stored.forEach(function(t){ if(t.title) myTitleSet.add(t.title); });
+                const stored = JSON.parse(localStorage.getItem(localKey) || '[]');
+                stored.forEach(function(t){ if(t.title) localTitleSet.add(t.title); });
             } catch(e){}
 
-            const lv = calcExpAndLevel(Array.from(myTitleSet));
-
-            // 모달 생성
+            // 모달 먼저 생성 (로딩 상태)
             const existing = document.getElementById('title-collection-modal');
             if (existing) existing.remove();
-
             const modal = document.createElement('div');
             modal.id = 'title-collection-modal';
             modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:16px;';
-            
-            let rows = '';
-            ALL_TITLES_LIST.forEach(function(entry) {
-                const rl = getTitleRarityLabel(entry.rarity);
-                const owned = myTitleSet.has(entry.title);
-                rows += '<div style="display:flex;align-items:center;gap-8px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';">'
-                  + '<span style="min-width:32px;font-size:9px;font-weight:900;color:'+rl.color+';background:'+rl.color+'22;border:1px solid '+rl.color+'44;border-radius:3px;padding:1px 4px;text-align:center;">['+rl.label+']</span>'
-                  + '<span style="font-size:11px;color:' + (owned ? '#2c1a04' : '#9e7a4a') + ';font-weight:' + (owned ? '700' : '400') + ';margin-left:6px;">'
-                  + (owned ? '✅ ' : '🔒 ') + entry.title + '</span>'
-                  + '</div>';
-            });
-
-            modal.innerHTML = '<div style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid rgba(139,90,43,0.5);border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">'
-              + '<div style="padding:14px 16px 10px;border-bottom:1px solid rgba(139,90,43,0.25);display:flex;align-items:center;justify-content:space-between;">'
-              + '<div>'
-              + '<div style="font-weight:900;font-size:14px;color:#3d1a00;">📖 ' + name + '의 칭호 컬렉션</div>'
-              + '<div style="font-size:11px;color:#7a5c2e;margin-top:2px;">'
-              + myTitleSet.size + ' / ' + ALL_TITLES_LIST.length + '개 획득 &nbsp;·&nbsp; Lv.' + lv.level + ' &nbsp;·&nbsp; ' + lv.exp + ' exp</div>'
-              + '</div>'
-              + '<button onclick="document.getElementById(&quot;title-collection-modal&quot;).remove()" style="font-size:18px;color:#7a5c2e;background:none;border:none;cursor:pointer;padding:0 4px;">✕</button>'
-              + '</div>'
-              + '<div style="overflow-y:auto;padding:10px 12px;">' + rows + '</div>'
+            modal.innerHTML = '<div style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid rgba(139,90,43,0.5);border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;">'
+              + '<div style="font-size:20px;margin-bottom:8px;">⏳</div>'
+              + '<div style="font-size:13px;color:#7a5c2e;font-weight:700;">스프레드시트에서 칭호를 불러오는 중...</div>'
               + '</div>';
-            
             document.body.appendChild(modal);
             modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+
+            function renderModal(myTitleSet) {
+                const lv = calcExpAndLevel(Array.from(myTitleSet));
+                let rows = '';
+                ALL_TITLES_LIST.forEach(function(entry) {
+                    const rl = getTitleRarityLabel(entry.rarity);
+                    const owned = myTitleSet.has(entry.title);
+                    rows += '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';">'
+                      + '<span style="min-width:32px;font-size:9px;font-weight:900;color:'+rl.color+';background:'+rl.color+'22;border:1px solid '+rl.color+'44;border-radius:3px;padding:1px 4px;text-align:center;">['+rl.label+']</span>'
+                      + '<span style="font-size:11px;color:' + (owned ? '#2c1a04' : '#9e7a4a') + ';font-weight:' + (owned ? '700' : '400') + ';margin-left:6px;">'
+                      + (owned ? '✅ ' : '🔒 ') + entry.title + '</span>'
+                      + '</div>';
+                });
+                modal.innerHTML = '<div style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid rgba(139,90,43,0.5);border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">'
+                  + '<div style="padding:14px 16px 10px;border-bottom:1px solid rgba(139,90,43,0.25);display:flex;align-items:center;justify-content:space-between;">'
+                  + '<div>'
+                  + '<div style="font-weight:900;font-size:14px;color:#3d1a00;">📖 ' + name + '의 칭호 컬렉션</div>'
+                  + '<div style="font-size:11px;color:#7a5c2e;margin-top:2px;">'
+                  + myTitleSet.size + ' / ' + ALL_TITLES_LIST.length + '개 획득 &nbsp;·&nbsp; Lv.' + lv.level + ' &nbsp;·&nbsp; ' + lv.exp + ' exp</div>'
+                  + '</div>'
+                  + '<button onclick="document.getElementById(&quot;title-collection-modal&quot;).remove()" style="font-size:18px;color:#7a5c2e;background:none;border:none;cursor:pointer;padding:0 4px;">✕</button>'
+                  + '</div>'
+                  + '<div style="overflow-y:auto;padding:10px 12px;">' + rows + '</div>'
+                  + '</div>';
+            }
+
+            // 스프레드시트에서 이 학생의 칭호 조회
+            if (SHEET_WEBHOOK_URL) {
+                fetch(`${SHEET_WEBHOOK_URL}?action=mytitles&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}`)
+                    .then(function(r){ return r.json(); })
+                    .then(function(data) {
+                        const sheetTitleSet = new Set(localTitleSet); // 로컬 기반
+                        if (Array.isArray(data.titles)) {
+                            data.titles.forEach(function(t){ if(t) sheetTitleSet.add(t); });
+                        }
+                        renderModal(sheetTitleSet);
+                    })
+                    .catch(function() {
+                        // 스프레드시트 실패 시 로컬로 폴백
+                        renderModal(localTitleSet);
+                    });
+            } else {
+                renderModal(localTitleSet);
+            }
         }
     </script>
 </div>
