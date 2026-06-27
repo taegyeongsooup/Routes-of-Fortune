@@ -409,6 +409,30 @@
             /* 왼쪽 패널 padding 축소 */
             #left-panel > div { padding: clamp(6px, 1vh, 12px) !important; }
         }
+
+        /* 명예의 전당 칭호 hover tooltip */
+        .hof-title-hover { display:inline-block; }
+        .hof-tooltip {
+            display: none;
+            position: absolute;
+            right: 0; top: calc(100% + 4px);
+            background: rgba(28,12,2,0.97);
+            border: 1px solid rgba(200,150,12,0.5);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #e8d5a3;
+            white-space: normal;
+            width: max-content;
+            max-width: 260px;
+            z-index: 100;
+            line-height: 1.8;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            text-align: left;
+            pointer-events: none;
+        }
+        .hof-title-hover:hover .hof-tooltip { display: block; }
     </style>
 </head>
 <body style="margin:0;padding:0;overflow:hidden;">
@@ -649,12 +673,13 @@
                     </div>
                     <div class="flex-grow overflow-y-auto border rounded-lg min-h-0" style="border-color:rgba(139,90,43,0.25); background:rgba(255,255,255,0.35);">
                         <table class="w-full text-[10px]" id="live-portfolio-table-wrap">
-                            <thead class="sticky top-0 z-10" style="background:rgba(240,225,190,0.95);">
-                                <tr style="color:#9e7a4a;">
+                            <thead class="sticky top-0 z-10" style="background:rgba(210,185,140,0.98);">
+                                <tr style="color:#3d1a00;font-weight:800;font-size:10px;">
                                     <th class="p-1.5 text-left">선단명</th>
                                     <th class="p-1 text-center">평단가</th>
                                     <th class="p-1 text-center">주수</th>
                                     <th class="p-1 text-center">평가금</th>
+                                    <th class="p-1 text-center">손익</th>
                                     <th class="p-1 text-right">수익률</th>
                                 </tr>
                             </thead>
@@ -884,7 +909,7 @@
         // 아래 URL을 본인의 Google Apps Script 웹앱 배포 URL로 교체하세요.
         // (Google Sheets > 확장 프로그램 > Apps Script 에서 webhook 코드를 배포한 뒤 "웹앱 URL"을 붙여넣으면
         //  게임 결과 제출 시 자동으로 칭호 기록이 시트에 누적되고, 로비 화면의 명예의 전당 TOP10도 이 URL에서 데이터를 읽어옵니다.)
-        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzeK_YRZlxwdylXVa9WU-oAOtBV2iVGEPijLf6fYrOZPOtpA_XgMRa_h4rWWfvcNg_u/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
+        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxMklW1kcz6ZD88TXdt_buJMS7N94hVk4ZKdN-EVcFLlhbCEo_JnoYt8c-kcqHmFgbG/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
 
         // ----------------------------------------------------
         // PLAYER IDENTITY (반 / 번호 / 이름)
@@ -1348,6 +1373,71 @@
                     }
                 }
             }
+            ,
+            {
+                title: "[재정 돌발] 스페인 무적함대의 강제 전쟁 분담금 징수",
+                desc: "스페인 왕실이 포르투갈 상인들에게 전쟁 비용 명목의 긴급 분담금 300 레알을 요구하는 왕명을 내렸습니다. 납부 거부 시 상선단 전체에 왕령 제재가 가해질 것이라는 경고와 함께입니다.",
+                opt1: "분담금 300 레알을 납부한다. [왕실과의 관계 유지, 불이익 없음]",
+                opt2: "왕명을 거부한다. [현금 보존, 단 전 선박에 왕령 제재 — 성공률 일제히 -20%]",
+                action: (choice) => {
+                    if (choice === 1) {
+                        if (cash < 300) {
+                            // 현금 부족 → 강제 반대 선택
+                            for (const id in ships) { ships[id].currentProb = Math.max(0, ships[id].currentProb - 20); }
+                            return "납부할 300 레알이 없어 거부로 처리되었습니다! 왕령 제재로 전 선박 성공률이 급락합니다.";
+                        }
+                        cash -= 300;
+                        ethicalScore += 1;
+                        return "300 레알을 납부했습니다. 왕실과의 관계가 유지되어 선단 운항에 차질이 없습니다.";
+                    } else {
+                        for (const id in ships) { ships[id].currentProb = Math.max(0, ships[id].currentProb - 20); }
+                        ethicalScore -= 1;
+                        return "왕명을 거부했습니다. 왕령 제재로 모든 선단의 성공률이 일제히 20% 하락합니다!";
+                    }
+                }
+            },
+            {
+                title: "[전염병 돌발] 선원 집단 괴혈병 — 긴급 비타민 보급 요청",
+                desc: "장기 항해 중인 여러 선단에서 괴혈병이 집단 발병했습니다. 긴급 레몬·라임 비타민 보급선을 파견하지 않으면 선원 대량 사망으로 항해가 전면 중단될 위기입니다.",
+                opt1: "비타민 보급선 파견 비용 200 레알 지불. [전 선박 성공률 +10% 회복]",
+                opt2: "자연 치유를 기다린다. [비용 없음, 단 전 선박 성공률 -25% 추가 하락]",
+                action: (choice) => {
+                    if (choice === 1) {
+                        if (cash < 200) {
+                            for (const id in ships) { ships[id].currentProb = Math.max(0, ships[id].currentProb - 25); }
+                            return "200 레알이 부족하여 보급선을 보내지 못했습니다. 괴혈병이 전 선단으로 퍼져 성공률이 급락합니다!";
+                        }
+                        cash -= 200;
+                        for (const id in ships) { ships[id].currentProb = Math.min(95, ships[id].currentProb + 10); }
+                        ethicalScore += 1;
+                        return "200 레알을 투입해 전 선단에 비타민을 보급했습니다! 선원들의 건강이 회복되어 성공률이 일제히 개선됩니다.";
+                    } else {
+                        for (const id in ships) { ships[id].currentProb = Math.max(0, ships[id].currentProb - 25); }
+                        return "자연 치유를 선택했습니다. 괴혈병이 심화되어 모든 선단의 성공률이 25% 급락합니다!";
+                    }
+                }
+            },
+            {
+                title: "[폭동 돌발] 리스본 항만 노동자 대파업 — 긴급 임금 협상",
+                desc: "리스본 항만 하역 노동자 전원이 열악한 처우에 항의해 무기한 파업에 돌입했습니다. 협상 타결금을 지불하지 않으면 모든 선박의 출항·입항이 전면 봉쇄됩니다.",
+                opt1: "파업 타결금 250 레알 지불. [배율 전반 유지, 정상 운항]",
+                opt2: "군병력을 동원해 파업을 강제 진압. [250 레알 절약, 단 전 선박 배율 -0.4 + 도덕 점수 -3]",
+                action: (choice) => {
+                    if (choice === 1) {
+                        if (cash < 250) {
+                            for (const id in ships) { ships[id].currentMult = Math.max(0.3, ships[id].currentMult - 0.4); ethicalScore -= 2; }
+                            return "250 레알이 없어 협상에 실패했습니다. 강제 진압으로 이어져 배율이 하락하고 노동자들의 분노가 극에 달합니다!";
+                        }
+                        cash -= 250;
+                        ethicalScore += 2;
+                        return "250 레알로 파업을 타결했습니다. 항만 노동자들이 업무에 복귀하여 정상 운항이 재개됩니다.";
+                    } else {
+                        for (const id in ships) { ships[id].currentMult = Math.max(0.3, ships[id].currentMult - 0.4); }
+                        ethicalScore -= 3;
+                        return "군 병력으로 파업을 강제 진압했습니다. 비용은 절약했으나 노동자 분노로 전 선단 기대 수익이 하락합니다!";
+                    }
+                }
+            }
         ];
 
         // 30개 동향 일반 리스트 보정 확장 (기존의 정의되지 않은 normalSituations를 situations로 일관되게 정정)
@@ -1430,6 +1520,59 @@
                 impact: (s) => {
                     s.H.currentProb += 20; s.H.currentMult += 0.4;
                     s.A.currentProb += 8; s.F.currentProb += 6;
+                }
+            }
+        );
+
+
+        // 추가 악재 상황 5개
+        situations.push(
+            {
+                title: "인도양 몬순 폭풍 — 전 항로 동시 마비",
+                desc: "기록적인 대형 몬순이 인도양을 강타하여 향료 항로 일대가 완전히 봉쇄되었습니다. 인도·동남아 방면 선단이 심대한 타격을 받았으며, 대서양 항로까지 연쇄 불안이 확산되고 있습니다.",
+                mainShip: null,
+                impact: (s) => {
+                    s.A.currentProb -= 20; s.B.currentProb -= 25; s.B.currentMult -= 0.8;
+                    s.F.currentProb -= 20; s.F.currentMult -= 1.0;
+                    s.C.currentProb -= 10; s.D.currentProb -= 10;
+                    s.G.currentProb -= 8;
+                }
+            },
+            {
+                title: "오스만 제국 지중해 전면 봉쇄령",
+                desc: "오스만 술탄이 지중해 전 해역에 통행 금지령을 선포했습니다. 기존 지중해 교역망 전체가 막히며 직물·후추 항로의 수익성이 급격히 훼손되고 있습니다.",
+                mainShip: "H",
+                impact: (s) => {
+                    s.H.currentProb -= 30; s.H.currentMult -= 0.8;
+                    s.A.currentProb -= 15; s.A.currentMult -= 0.4;
+                    s.C.currentProb -= 10;
+                }
+            },
+            {
+                title: "흑사병 재창궐 — 리스본 항구 봉쇄",
+                desc: "흑사병이 리스본 항구 인근에 다시 출몰하며 당국이 입항 전면 금지 명령을 내렸습니다. 귀항 선단들이 대기 중이나 항구 접근이 불가능해 화물 부패 손실이 발생하고 있습니다.",
+                mainShip: null,
+                impact: (s) => {
+                    // 전 선단 성공률 하락
+                    for (const id in s) { s[id].currentProb -= 12; s[id].currentMult -= 0.2; }
+                }
+            },
+            {
+                title: "포르투갈 왕실 세금 폭탄 — 무역세 3배 인상",
+                desc: "재정난에 빠진 포르투갈 왕실이 교역 수익에 대한 무역세를 기존의 3배로 인상했습니다. 예상 수익이 대폭 감소하며 전반적인 선단 배율이 크게 낮아졌습니다.",
+                mainShip: null,
+                impact: (s) => {
+                    for (const id in s) { s[id].currentMult = Math.max(0.3, s[id].currentMult - 0.5); }
+                }
+            },
+            {
+                title: "카리브해 허리케인 직격 — 설탕·은 항로 전멸",
+                desc: "역대급 허리케인이 카리브해를 강타하여 설탕 농장과 은광 수송로가 초토화되었습니다. 해당 지역 선단들의 성공 가능성이 붕괴 직전에 몰렸습니다.",
+                mainShip: "G",
+                impact: (s) => {
+                    s.G.currentProb -= 30; s.G.currentMult -= 0.6;
+                    s.C.currentProb -= 20; s.C.currentMult -= 0.4;
+                    s.E.currentProb -= 15;
                 }
             }
         );
@@ -1698,6 +1841,19 @@
             if (!container) return;
             container.innerHTML = '';
 
+            // 10라운드(마지막)에서는 예측 대신 안내 문구
+            if (currentRound >= TOTAL_ROUNDS) {
+                container.innerHTML = `
+                    <div class="col-span-2 flex items-center justify-center h-full py-4">
+                        <div class="text-center px-3">
+                            <div class="text-2xl mb-2">⚓</div>
+                            <p class="font-black text-[13px]" style="color:#c8960c;">마지막 투자입니다.</p>
+                            <p class="text-[11px] mt-1 leading-relaxed" style="color:#9e7a4a;">성공 가능성을 따져 최종적 투자를 실시하십시오.</p>
+                        </div>
+                    </div>`;
+                return;
+            }
+
             if (currentForecastPool.length === 0) {
                 container.innerHTML = `<p class="col-span-2 text-slate-500 text-[11px] text-center py-4">다음 라운드로 넘어가면 첩보가 갱신됩니다.</p>`;
                 return;
@@ -1860,7 +2016,7 @@
 
                 // 값 하한선 상한선 정렬
                 for (const shipId in ships) {
-                    ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb));
+                    ships[shipId].currentProb = Math.max(0, Math.min(95, ships[shipId].currentProb));
                     if (ships[shipId].currentProb <= 0) ships[shipId]._ruined = true;
                     ships[shipId].currentMult = Math.max(0.3, Math.round(ships[shipId].currentMult * 10) / 10);
                 }
@@ -1922,19 +2078,19 @@
         function applyGlobalMarketFluctuations(excludeShipId) {
             for (const shipId in ships) {
                 if (shipId === excludeShipId) continue;
+                if (ships[shipId]._ruined) continue;
                 
-                // 성공 확률에 -10% ~ +10% 마찰 조정 (도파민 강화)
-                const probDelta = Math.floor(Math.random() * 21) - 10; 
+                // 확률 변동: -15 ~ +8 (악재 편향)
+                const probDelta = Math.floor(Math.random() * 24) - 15;
                 ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
 
-                // 성공률 0이 되면 영구 손실 (해당 선박 망함 표시)
                 if (ships[shipId].currentProb <= 0) {
                     ships[shipId].currentProb = 0;
                     ships[shipId]._ruined = true;
                 }
 
-                // 배율에 -0.3배 ~ +0.4배 마찰 조정 (도파민 강화)
-                const multDelta = (Math.random() * 0.7 - 0.3);
+                // 배율 변동: -0.5 ~ +0.3 (악재 편향)
+                const multDelta = (Math.random() * 0.8 - 0.5);
                 ships[shipId].currentMult = Math.max(0.3, Math.round((ships[shipId].currentMult + multDelta) * 10) / 10);
             }
         }
@@ -2314,15 +2470,19 @@
                         else if (price - myAvg < -0.01) pnlClass = "pnl-loss";
                     }
                     const arrow = pct > 0.1 ? "▲" : pct < -0.1 ? "▼" : "─";
+                    const investAmt = Math.round(myAvg * portfolio[shipId]);
+                    const pnlAmt = evalVal - investAmt;
+                    const pnlAmtStr = (pnlAmt >= 0 ? '+' : '') + pnlAmt.toLocaleString();
                     const rowHTML = `
                         <tr class="border-b" style="border-color:rgba(139,90,43,0.20);">
-                            <td class="p-1 pl-1.5" style="color:#c9a96e;">
-                                <span class="font-bold block" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name.replace(' 호','')}</span>
+                            <td class="p-1 pl-1.5">
+                                <span class="font-bold block" style="color:#2c1a04;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;">${s.name.replace(' 호','')}</span>
                             </td>
-                            <td class="p-1 text-center font-mono" style="color:#9e7a4a;">${Math.round(myAvg)}</td>
-                            <td class="p-1 text-center font-mono" style="color:#c9a96e;">${portfolio[shipId]}주</td>
-                            <td class="p-1 text-center font-mono font-bold ${pnlClass}">${evalVal.toLocaleString()}</td>
-                            <td class="p-1 text-right font-mono font-bold ${pnlClass}">${arrow}${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>
+                            <td class="p-1 text-center font-mono" style="color:#5c3d11;font-size:10px;">${Math.round(myAvg)}</td>
+                            <td class="p-1 text-center font-mono font-bold" style="color:#2c1a04;font-size:10px;">${portfolio[shipId]}주</td>
+                            <td class="p-1 text-center font-mono font-bold" style="color:#2c1a04;font-size:10px;">${evalVal.toLocaleString()}</td>
+                            <td class="p-1 text-center font-mono font-bold ${pnlClass}" style="font-size:10px;">${pnlAmtStr}</td>
+                            <td class="p-1 text-right font-mono font-bold ${pnlClass}" style="font-size:10px;">${arrow}${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>
                         </tr>
                     `;
                     liveTableBody.insertAdjacentHTML('beforeend', rowHTML);
@@ -2332,7 +2492,7 @@
             if (!hasAnyStockOwned) {
                 liveTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center py-6 text-[11px]" style="color:#7a5c2e;">현재 보유 중인 상선단 지분이 없습니다.</td>
+                        <td colspan="6" class="text-center py-6 text-[11px]" style="color:#7a5c2e;">현재 보유 중인 상선단 지분이 없습니다.</td>
                     </tr>
                 `;
             }
@@ -2763,6 +2923,7 @@
                 password: pw,
                 finalAssets: data.finalAssets,
                 title: data.title,
+                allTitles: data.allTitles || data.title,
                 grade: data.grade
             };
             fetch(SHEET_WEBHOOK_URL, {
@@ -2827,7 +2988,7 @@
                         titles: new Set(), titleList: [], bestGrade: 'C'
                     };
                 }
-                // 고유 칭호 누적
+                // 고유 칭호 누적 (서버에서 titles 배열로 오거나 title 단일 필드로 옴)
                 const titles = Array.isArray(r.titles) ? r.titles : (r.title ? [r.title] : []);
                 titles.forEach(t => {
                     if (t && !studentMap[key].titles.has(t)) {
@@ -2835,8 +2996,8 @@
                         studentMap[key].titleList.push(t);
                     }
                 });
-                // 최고 등급 갱신
-                const g = r.grade || 'C';
+                // 최고 등급 갱신 (bestGrade 또는 grade 둘 다 대응)
+                const g = r.bestGrade || r.grade || 'C';
                 if ((GRADE_ORDER[g] || 0) > (GRADE_ORDER[studentMap[key].bestGrade] || 0)) {
                     studentMap[key].bestGrade = g;
                 }
@@ -2856,7 +3017,7 @@
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}`;
                 const gradeColor = gradeColors[s.bestGrade] || '#9ca3af';
                 // 전체 칭호 hover tooltip
-                const allTitlesStr = titlesArr.join(' · ') || '없음';
+                const allTitlesStr = titlesArr.length ? titlesArr.map((t,i) => `${i+1}. ${t}`).join('<br>') : '없음';
                 const badgesHtml = recent3.map(t =>
                     `<span style="background:rgba(200,150,12,0.15);color:#92400e;border:1px solid rgba(200,150,12,0.3);border-radius:4px;padding:1px 5px;font-size:9px;white-space:nowrap;">${t}</span>`
                 ).join('');
@@ -2867,9 +3028,9 @@
                             <span class="w-5 text-center">${medal}</span>
                             ${s.cls || s.playerClass}반 ${s.num || s.playerNumber}번 ${s.name || s.playerName}
                         </span>
-                        <span class="text-[11px] font-black cursor-help relative group" style="color:${gradeColor};"
-                              title="${allTitlesStr}">
+                        <span class="hof-title-hover" style="color:${gradeColor};font-size:11px;font-weight:900;cursor:help;position:relative;">
                             ${s.count}개 칭호 ▾
+                            <span class="hof-tooltip">${allTitlesStr}</span>
                         </span>
                     </div>
                     <div class="flex items-center gap-1 flex-wrap" style="padding-left:20px;">
