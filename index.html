@@ -414,25 +414,23 @@
         .hof-title-hover { display:inline-block; }
         .hof-tooltip {
             display: none;
-            position: absolute;
-            right: 0; top: calc(100% + 4px);
+            position: fixed;
             background: rgba(28,12,2,0.97);
             border: 1px solid rgba(200,150,12,0.5);
             border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 10px;
+            padding: 8px 12px;
+            font-size: 11px;
             font-weight: 500;
             color: #e8d5a3;
             white-space: normal;
-            width: max-content;
-            max-width: 260px;
-            z-index: 100;
+            width: 240px;
+            z-index: 9999;
             line-height: 1.8;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.7);
             text-align: left;
             pointer-events: none;
         }
-        .hof-title-hover:hover .hof-tooltip { display: block; }
+        /* tooltip은 JS mouseover로 제어 */
     </style>
 </head>
 <body style="margin:0;padding:0;overflow:hidden;">
@@ -611,7 +609,7 @@
 
             <!-- 칭호 수집 명예의 전당 (Top 10) -->
             <div class="w-full max-w-3xl px-4">
-                <div class="rounded-2xl p-4" style="background:linear-gradient(145deg,#f5edd6,#ede0c0); border:1px solid rgba(139,90,43,0.45);">
+                <div class="rounded-2xl p-4" style="background:linear-gradient(145deg,#f5edd6,#ede0c0); border:1px solid rgba(139,90,43,0.45); overflow:visible; position:relative;">
                     <div class="flex items-center justify-between mb-2.5">
                         <h3 class="font-bold text-sm flex items-center gap-2" style="color:#2c1a04;">
                             <i class="fa-solid fa-trophy text-amber-400"></i> 명예의 전당 (TOP 10)
@@ -625,7 +623,7 @@
                             </button>
                         </div>
                     </div>
-                    <div id="hall-of-fame-list" class="space-y-1 max-h-[120px] overflow-y-auto text-left">
+                    <div id="hall-of-fame-list" class="space-y-1 text-left" style="max-height:220px;overflow-y:auto;overflow-x:visible;">
                         <p class="text-slate-500 text-[12px] text-center py-3">기록을 불러오는 중입니다... (스프레드시트 연동이 설정되지 않았다면 표시되지 않을 수 있습니다)</p>
                     </div>
                 </div>
@@ -909,7 +907,7 @@
         // 아래 URL을 본인의 Google Apps Script 웹앱 배포 URL로 교체하세요.
         // (Google Sheets > 확장 프로그램 > Apps Script 에서 webhook 코드를 배포한 뒤 "웹앱 URL"을 붙여넣으면
         //  게임 결과 제출 시 자동으로 칭호 기록이 시트에 누적되고, 로비 화면의 명예의 전당 TOP10도 이 URL에서 데이터를 읽어옵니다.)
-        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxMklW1kcz6ZD88TXdt_buJMS7N94hVk4ZKdN-EVcFLlhbCEo_JnoYt8c-kcqHmFgbG/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
+        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzeK_YRZlxwdylXVa9WU-oAOtBV2iVGEPijLf6fYrOZPOtpA_XgMRa_h4rWWfvcNg_u/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
 
         // ----------------------------------------------------
         // PLAYER IDENTITY (반 / 번호 / 이름)
@@ -2080,8 +2078,8 @@
                 if (shipId === excludeShipId) continue;
                 if (ships[shipId]._ruined) continue;
                 
-                // 확률 변동: -15 ~ +8 (악재 편향)
-                const probDelta = Math.floor(Math.random() * 24) - 15;
+                // 확률 변동: -10 ~ +8 (소폭 완화)
+                const probDelta = Math.floor(Math.random() * 19) - 10;
                 ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
 
                 if (ships[shipId].currentProb <= 0) {
@@ -2089,8 +2087,8 @@
                     ships[shipId]._ruined = true;
                 }
 
-                // 배율 변동: -0.5 ~ +0.3 (악재 편향)
-                const multDelta = (Math.random() * 0.8 - 0.5);
+                // 배율 변동: -0.3 ~ +0.3 (소폭 완화)
+                const multDelta = (Math.random() * 0.6 - 0.3);
                 ships[shipId].currentMult = Math.max(0.3, Math.round((ships[shipId].currentMult + multDelta) * 10) / 10);
             }
         }
@@ -2414,6 +2412,15 @@
         function updateUI() {
             const totalWealth = calculateTotalAssets();
             document.getElementById('dashboard-total-assets').textContent = totalWealth.toLocaleString();
+
+            // 자본 0 파산 감지 (게임 진행 중에만)
+            if (currentRound > 0 && totalWealth <= 0 && !document.getElementById('screen-game').classList.contains('hidden')) {
+                setTimeout(() => {
+                    showCustomAlert("💀 모든 자본이 소멸했습니다! 파산으로 게임이 종료됩니다.");
+                    setTimeout(() => startVoyageResolution(), 1500);
+                }, 300);
+                return;
+            }
             
             // Round Display Header
             if (currentRound === 0) {
@@ -2969,6 +2976,78 @@
                 });
         }
 
+
+        // 칭호 희귀도 등급 (숫자 클수록 희귀)
+        var TITLE_RARITY = {
+            "대항해시대 바다의 황제": 100,
+            "대항해시대의 조지 소로스": 95,
+            "신항로의 살아있는 전설": 88,
+            "하이리스크 하이리턴 레이서": 85,
+            "절체절명의 역전 드라마": 82,
+            "마젤란의 후계자": 80,
+            "리스본 증권거래소의 제왕": 75,
+            "동인도 무역의 떠오르는 거성": 72,
+            "폭풍을 뚫은 대박 투자자": 70,
+            "목숨을 건 올인 도박사": 68,
+            "팔방미인 전천후 투자자": 66,
+            "무사귀환의 선단장": 64,
+            "향료와 은의 이중 제왕": 62,
+            "윤리적 사회적 공헌가 (ESG 선구자)": 60,
+            "황금 나침반을 쥔 항해 투자자": 55,
+            "동방 비단길의 마지막 도박사": 53,
+            "향료 군도의 숨은 권력자": 51,
+            "포토시 은광의 진짜 주인": 49,
+            "신대륙 구황식물 보급왕": 47,
+            "인도 후추 무역의 선구자": 45,
+            "카리브해 설탕 농장의 큰손": 43,
+            "리스본 항구의 떠오르는 큰손": 40,
+            "움직이는 인간 포트폴리오": 38,
+            "단 하나의 별을 따른 자": 36,
+            "안전제일 리스크 관리자": 34,
+            "위험을 먹고 사는 모험가": 34,
+            "대서양 무역의 안정적 강자": 30,
+            "신항로 개척의 유망주": 28,
+            "포르투갈 왕실 인증 유능한 상인": 26,
+            "집중투자 신봉자": 24,
+            "선택과 집중의 이원 전략가": 22,
+            "삼각편대 전략가": 22,
+            "균형 잡힌 분산투자 모범생": 20,
+            "불굴의 장기 보유자": 20,
+            "부지런한 시장의 개미": 18,
+            "꾸준한 정석 투자자": 16,
+            "재빠른 손절의 달인": 15,
+            "쉴 새 없는 손가락의 단타 승부사": 14,
+            "한번 사면 절대 안 파는 장기 신봉자": 14,
+            "철저한 배금주의자": 13,
+            "악명 높은 해적 자본가": 13,
+            "영혼 없는 냉혈 자본가": 12,
+            "완벽한 평화 본전치기 선구자": 10,
+            "성공적인 첫 항해를 마친 신참 거상": 9,
+            "잔잔한 파도 위의 알찬 수익가": 8,
+            "현금이 왕이다": 7,
+            "지중해의 애처로운 망령": 7,
+            "저주받은 항로의 선주": 6,
+            "풍랑 속 생존자": 6,
+            "원금 수성에 성공한 신중론자": 5,
+            "절반의 손실을 막아낸 침착한 투자자": 4,
+            "쓰라린 교훈을 얻은 견습 상인": 3,
+            "풍랑에 휩쓸린 비운의 선주": 2,
+            "바다 밑바닥 개척의 기부천사": 2,
+            "바다의 기부 천사 (알거지)": 2,
+            "항구를 떠나지 않은 겁쟁이": 1,
+            "구경꾼 거상": 1,
+            "평범한 시장의 관찰자": 1
+        };
+        function getTitleRarity(title) { return TITLE_RARITY[title] || 5; }
+        function getTitleRarityLabel(rarity) {
+            if (rarity >= 90) return { label: 'SSS', color: '#ff6b35' };
+            if (rarity >= 75) return { label: 'SS',  color: '#f59e0b' };
+            if (rarity >= 55) return { label: 'S',   color: '#a78bfa' };
+            if (rarity >= 35) return { label: 'A',   color: '#34d399' };
+            if (rarity >= 12) return { label: 'B',   color: '#60a5fa' };
+            return { label: 'C', color: '#9ca3af' };
+        }
+
         // 등급 우선순위 (높을수록 좋음)
         const GRADE_ORDER = { 'SS': 5, 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
 
@@ -3013,14 +3092,16 @@
             listEl.innerHTML = ranking.map((s, idx) => {
                 const titlesArr = Array.isArray(s.titles) ? s.titles : [];
                 // 최근 3개 칭호 (뱃지)
-                const recent3 = titlesArr.slice(-3).reverse();
+                // 희귀도 높은 순 상위 3개
+                var recent3 = titlesArr.slice().sort(function(a,b){ return getTitleRarity(b)-getTitleRarity(a); }).slice(0,3);
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}`;
                 const gradeColor = gradeColors[s.bestGrade] || '#9ca3af';
                 // 전체 칭호 hover tooltip
                 const allTitlesStr = titlesArr.length ? titlesArr.map((t,i) => `${i+1}. ${t}`).join('<br>') : '없음';
-                const badgesHtml = recent3.map(t =>
-                    `<span style="background:rgba(200,150,12,0.15);color:#92400e;border:1px solid rgba(200,150,12,0.3);border-radius:4px;padding:1px 5px;font-size:9px;white-space:nowrap;">${t}</span>`
-                ).join('');
+                var badgesHtml = recent3.map(function(t) {
+                    var r = getTitleRarity(t); var rl = getTitleRarityLabel(r);
+                    return '<span style="background:'+rl.color+'18;color:'+rl.color+';border:1px solid '+rl.color+'55;border-radius:4px;padding:1px 5px;font-size:9px;white-space:nowrap;display:inline-block;margin-bottom:2px;"><b>['+rl.label+']</b> '+t+'</span>';
+                }).join(' ');
                 return `
                 <div class="rounded-lg px-2.5 py-1.5 mb-1" style="background:rgba(255,255,255,0.30); border:1px solid rgba(139,90,43,0.25);">
                     <div class="flex items-center justify-between mb-0.5">
@@ -3044,6 +3125,30 @@
         // ----------------------------------------------------
         // REBOOT & RESET GAME
         // ----------------------------------------------------
+
+        // 명예의전당 tooltip - fixed position으로 잘림 없이 표시
+        document.addEventListener('mouseover', function(e) {
+            var hover = e.target.closest('.hof-title-hover');
+            if (!hover) return;
+            var tip = hover.querySelector('.hof-tooltip');
+            if (!tip) return;
+            var rect = hover.getBoundingClientRect();
+            tip.style.display = 'block';
+            var left = rect.right - 244;
+            if (left < 4) left = 4;
+            if (left + 244 > window.innerWidth - 4) left = window.innerWidth - 248;
+            var top = rect.bottom + 4;
+            if (top + 220 > window.innerHeight) top = rect.top - 224;
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        });
+        document.addEventListener('mouseout', function(e) {
+            var hover = e.target.closest('.hof-title-hover');
+            if (!hover) return;
+            var tip = hover.querySelector('.hof-tooltip');
+            if (tip) tip.style.display = 'none';
+        });
+
         function resetGame() {
             playSound('click');
             cash = 1000;
