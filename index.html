@@ -439,71 +439,83 @@
     <!-- Audio Feedback Controller -->
     <script>
         let audioCtx = null;
+        let sfxVolume = 0.7;   // 효과음 볼륨 (0~1)
+        let bgmVolume = 0.4;   // 배경음 볼륨 (0~1)
+        let bgmAudio = null;   // BGM Audio 객체
+        let bgmStarted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // BGM 시작 (파일명: bgm.mp3 — HTML과 같은 폴더에 위치)
+        function startBGM() {
+            if (bgmStarted) return;
+            try {
+                bgmAudio = new Audio('bgm.mp3');
+                bgmAudio.loop = true;
+                bgmAudio.volume = bgmVolume;
+                bgmAudio.play().catch(() => {});
+                bgmStarted = true;
+            } catch(e) {}
+        }
+        function stopBGM() {
+            if (bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; bgmStarted = false; }
+        }
+        function setBGMVolume(v) {
+            bgmVolume = v;
+            if (bgmAudio) bgmAudio.volume = v;
+        }
+
         function playSound(type) {
             try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
+                initAudio();
+                const vol = sfxVolume;
                 const now = audioCtx.currentTime;
 
+                function note(freq, startT, endT, waveType, gainVal) {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = waveType || 'sine';
+                    o.frequency.setValueAtTime(freq, now + startT);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    g.gain.setValueAtTime(gainVal * vol, now + startT);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + endT);
+                    o.start(now + startT); o.stop(now + endT);
+                }
+
                 if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
-                    gain.gain.setValueAtTime(0.05, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
+                    note(440, 0, 0.1, 'sine', 0.05);
                 } else if (type === 'buy') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-                    gain.gain.setValueAtTime(0.07, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
+                    note(523.25, 0,    0.25, 'triangle', 0.09);
+                    note(659.25, 0.08, 0.3,  'triangle', 0.09);
+                    note(783.99, 0.16, 0.35, 'triangle', 0.09);
                 } else if (type === 'sell') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(783.99, now); // G5
-                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-                    osc.frequency.setValueAtTime(523.25, now + 0.16); // C5
-                    gain.gain.setValueAtTime(0.07, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
+                    note(783.99, 0,    0.25, 'triangle', 0.09);
+                    note(659.25, 0.08, 0.3,  'triangle', 0.09);
+                    note(523.25, 0.16, 0.35, 'triangle', 0.09);
                 } else if (type === 'event') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.linearRampToValueAtTime(300, now + 0.4);
-                    gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                    osc.start(now);
-                    osc.stop(now + 0.5);
+                    // 일반 정세 이벤트
+                    note(150, 0, 0.5, 'sawtooth', 0.08);
+                } else if (type === 'sudden') {
+                    // 돌발 상황 — 긴박한 3음 경보
+                    note(220,  0,    0.25, 'sawtooth', 0.18);
+                    note(180,  0.22, 0.45, 'sawtooth', 0.18);
+                    note(140,  0.44, 0.75, 'sawtooth', 0.22);
+                    note(110,  0.7,  1.2,  'sawtooth', 0.25);
+                    // 고음 경적
+                    note(880,  0,    0.15, 'square',   0.12);
+                    note(660,  0.15, 0.35, 'square',   0.10);
                 } else if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.5);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    osc.start(now);
-                    osc.stop(now + 0.6);
+                    note(523.25, 0,   0.5, 'sine', 0.10);
+                    note(659.25, 0.1, 0.6, 'sine', 0.10);
+                    note(1046.5, 0.2, 0.8, 'sine', 0.10);
                 } else if (type === 'fail') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.linearRampToValueAtTime(110, now + 0.6);
-                    gain.gain.setValueAtTime(0.12, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-                    osc.start(now);
-                    osc.stop(now + 0.7);
+                    note(220, 0,   0.6, 'sawtooth', 0.12);
+                    note(110, 0.3, 0.9, 'sawtooth', 0.14);
                 }
             } catch (e) {
                 console.log("Audio context blocked or unsupported:", e);
@@ -540,6 +552,25 @@
                 <button onclick="quitGame()" style="background:rgba(127,29,29,0.75);color:#fca5a5;border:1px solid rgba(153,27,27,0.5);font-size:11px;" class="px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition shrink-0">
                     <i class="fa-solid fa-flag text-[10px]"></i> 게임 포기하기
                 </button>
+                <!-- 음량 조절 버튼 -->
+                <div class="relative shrink-0">
+                    <button id="vol-toggle-btn" onclick="toggleVolumePanel()" style="background:rgba(44,26,4,0.85);color:#c8960c;border:1px solid rgba(200,150,12,0.4);font-size:11px;" class="px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition">
+                        <i class="fa-solid fa-volume-high text-[10px]"></i> 음량
+                    </button>
+                    <div id="volume-panel" style="display:none;position:absolute;right:0;top:36px;z-index:200;background:linear-gradient(135deg,rgba(28,14,2,0.98),rgba(44,26,4,0.97));border:1px solid rgba(200,150,12,0.4);border-radius:12px;padding:14px 16px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.7);">
+                        <div style="font-size:11px;font-weight:900;color:#c8960c;margin-bottom:10px;letter-spacing:0.05em;">🔊 음량 설정</div>
+                        <div style="margin-bottom:10px;">
+                            <div style="font-size:10px;color:#9e7a4a;margin-bottom:4px;">🎵 배경음</div>
+                            <input type="range" id="bgm-slider" min="0" max="100" value="40" oninput="setBGMVolume(this.value/100);document.getElementById('bgm-val').textContent=this.value+'%'" style="width:100%;accent-color:#c8960c;cursor:pointer;">
+                            <span id="bgm-val" style="font-size:10px;color:#7a5c2e;">40%</span>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;color:#9e7a4a;margin-bottom:4px;">⚡ 효과음</div>
+                            <input type="range" id="sfx-slider" min="0" max="100" value="70" oninput="sfxVolume=this.value/100;document.getElementById('sfx-val').textContent=this.value+'%'" style="width:100%;accent-color:#c8960c;cursor:pointer;">
+                            <span id="sfx-val" style="font-size:10px;color:#7a5c2e;">70%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -1080,8 +1111,8 @@
                 }
             },
             {
-                title: "사탕수수 가공 신기술 확산",
-                desc: "사탕수수를 끓여 하얀 결정 설탕을 제작하는 방법을 발견했습니다. 설탕의 고급화로 가격이 높아집니다.",
+                title: "설탕 대체 사탕수수 가공 신기술 확산",
+                desc: "사탕수수를 끓여 하얀 결정 설탕을 제작하는 방법을 발견했습니다.",
                 impact: (s) => {
                     s.G.currentMult += 0.3;
                 }
@@ -1507,7 +1538,7 @@
             },
             {
                 title: "카리브해 설탕 정제 기술 혁신",
-                desc: "쿠바 농장에서 새로운 정제법이 개발되어 설탕 생산량이 종전의 두 배 이상으로 늘었습니다. 설탕 수송 선박의 이익이 커질 것으로 기대됩니다.",
+                desc: "쿠바 농장에서 새로운 정제법이 개발되어 설탕 생산량이 종전의 두 배 이상으로 늘었습니다.",
                 impact: (s) => {
                     s.G.currentMult += 0.8; s.G.currentProb += 12;
                 }
@@ -1564,8 +1595,8 @@
                 }
             },
             {
-                title: "아메리카 대륙 카리브해에 허리케인 직격",
-                desc: "역대급 허리케인이 카리브해를 강타하여 설탕과 은의 수송로가 초토화되었습니다. 해당 지역 선단들의 성공 가능성이 붕괴 직전에 몰렸습니다.",
+                title: "카리브해 허리케인 직격 — 설탕·은 항로 전멸",
+                desc: "역대급 허리케인이 카리브해를 강타하여 설탕 농장과 은광 수송로가 초토화되었습니다. 해당 지역 선단들의 성공 가능성이 붕괴 직전에 몰렸습니다.",
                 mainShip: "G",
                 impact: (s) => {
                     s.G.currentProb -= 30; s.G.currentMult -= 0.6;
@@ -1611,6 +1642,7 @@
         // SCREEN TRANSITION WORKFLOW
         // ----------------------------------------------------
         function startGame() {
+            startBGM();
             const classVal = document.getElementById('input-player-class').value.trim();
             const numberVal = document.getElementById('input-player-number').value.trim();
             const nameVal = document.getElementById('input-player-name').value.trim();
@@ -1991,7 +2023,8 @@
                 optionsContainer.classList.remove('hidden');
                 closeBtn.classList.add('hidden'); // 돌발 사태에 선택지를 강제 대처 완료하기 전까진 투자창에 갈 수 없게 제한
 
-                playSound('event');
+                playSound('sudden');
+                triggerSuddenEventEffect();
             } else {
                 roundEl.innerText = `ROUND ${currentRound} / ${TOTAL_ROUNDS}`;
 
@@ -2774,7 +2807,7 @@
             try { myTitles = JSON.parse(localStorage.getItem(myTitlesKey) || '[]'); } catch(e) {}
             const today = new Date().toLocaleDateString('ko-KR');
             earnedTitles.forEach(function(t) {
-                myTitles.push({ title: t.title, grade: grade, date: today, assets: finalAssets });
+                myTitles.push({ title: t.title, desc: t.desc || '', grade: grade, date: today, assets: finalAssets });
             });
             localStorage.setItem(myTitlesKey, JSON.stringify(myTitles.slice(-50)));
 
@@ -3130,9 +3163,11 @@
                 if (!studentMap[key]) {
                     studentMap[key] = {
                         name: r.playerName, cls: r.playerClass, num: r.playerNumber,
-                        titles: new Set(), titleList: [], bestGrade: 'C'
+                        titles: new Set(), titleList: [], bestGrade: 'C', maxAssets: 0
                     };
                 }
+                const assets = Number(r.maxAssets || r.finalAssets || 0);
+                if (assets > studentMap[key].maxAssets) studentMap[key].maxAssets = assets;
                 // 고유 칭호 누적 (서버에서 titles 배열로 오거나 title 단일 필드로 옴)
                 const titles = Array.isArray(r.titles) ? r.titles : (r.title ? [r.title] : []);
                 titles.forEach(t => {
@@ -3149,8 +3184,11 @@
             });
 
             const ranking = Object.values(studentMap)
-                .map(s => ({ ...s, count: s.titles.size, titles: s.titleList }))
-                .sort((a, b) => b.level !== a.level ? b.level - a.level : b.maxAssets - a.maxAssets)
+                .map(s => {
+                    const lv = calcExpAndLevel(s.titleList);
+                    return { ...s, count: s.titles.size, titles: s.titleList, level: lv.level, exp: lv.exp, maxAssets: s.maxAssets || 0 };
+                })
+                .sort((a, b) => b.level !== a.level ? b.level - a.level : b.exp !== a.exp ? b.exp - a.exp : b.maxAssets - a.maxAssets)
                 .slice(0, 10);
 
             const gradeColors = { SS:'#f59e0b', S:'#a78bfa', A:'#34d399', B:'#60a5fa', C:'#9ca3af' };
@@ -3277,6 +3315,58 @@
             updateUI();
         }
 
+        function toggleVolumePanel() {
+            const panel = document.getElementById('volume-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            // 패널 외부 클릭 시 닫기
+            if (panel.style.display === 'block') {
+                setTimeout(() => {
+                    document.addEventListener('click', function closePanelOnOutside(e) {
+                        if (!document.getElementById('volume-panel').contains(e.target) &&
+                            e.target.id !== 'vol-toggle-btn') {
+                            document.getElementById('volume-panel').style.display = 'none';
+                            document.removeEventListener('click', closePanelOnOutside);
+                        }
+                    });
+                }, 100);
+            }
+        }
+
+        function triggerSuddenEventEffect() {
+            // 빨간 화면 플래시
+            const flash = document.createElement('div');
+            flash.style.cssText = 'position:fixed;inset:0;z-index:9000;pointer-events:none;background:rgba(200,20,20,0.25);animation:suddenFlash 0.8s ease-out forwards;';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 900);
+
+            // 경고 배너
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9001;pointer-events:none;text-align:center;animation:suddenBanner 1.2s ease-out forwards;';
+            banner.innerHTML = '<div style="font-size:clamp(28px,5vw,56px);font-weight:900;color:#ff2222;text-shadow:0 0 30px #ff000088,0 0 60px #ff000044;letter-spacing:0.08em;font-family:serif;">⚡ 돌발 상황 ⚡</div>';
+            document.body.appendChild(banner);
+            setTimeout(() => banner.remove(), 1300);
+
+            // CSS 애니메이션 주입 (한 번만)
+            if (!document.getElementById('sudden-style')) {
+                const style = document.createElement('style');
+                style.id = 'sudden-style';
+                style.textContent = `
+                    @keyframes suddenFlash {
+                        0%   { opacity:1; }
+                        40%  { opacity:0.6; }
+                        100% { opacity:0; }
+                    }
+                    @keyframes suddenBanner {
+                        0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+                        20%  { opacity:1; transform:translate(-50%,-50%) scale(1.15); }
+                        60%  { opacity:1; transform:translate(-50%,-50%) scale(1.0); }
+                        100% { opacity:0; transform:translate(-50%,-50%) scale(0.95); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
         function quitGame() {
             if (confirm("정말 포기하시겠습니까?\n현재 게임 진행 상황이 모두 초기화됩니다.")) {
                 resetGame();
@@ -3317,69 +3407,69 @@
         // 전체 칭호 목록 (모든 존재 칭호 + 내가 획득한 것 표시)
         const ALL_TITLES_LIST = [
             // SSS
-            {title:"대항해시대 바다의 황제", rarity:100},
-            {title:"대항해시대의 조지 소로스", rarity:95},
+            {title:"대항해시대 바다의 황제", rarity:100, hint:"최종 자산 30,000 레알 이상 달성"},
+            {title:"대항해시대의 조지 소로스", rarity:95, hint:"최종 자산 10,000 레알 이상 달성"},
             // SS
-            {title:"신항로의 살아있는 전설", rarity:88},
-            {title:"하이리스크 하이리턴 레이서", rarity:85},
-            {title:"절체절명의 역전 드라마", rarity:82},
-            {title:"마젤란의 후계자", rarity:80},
+            {title:"신항로의 살아있는 전설", rarity:88, hint:"최종 자산 8,000 레알 이상 달성"},
+            {title:"하이리스크 하이리턴 레이서", rarity:85, hint:"올인 경험이 있으면서 최종 자산 5,000 레알 이상 달성"},
+            {title:"절체절명의 역전 드라마", rarity:82, hint:"올인 경험이 있으면서 최종 자산 4,000 레알 이상 달성"},
+            {title:"마젤란의 후계자", rarity:80, hint:"빅토리아 호(F)에 투자 후 배율 4.0 이상으로 항해 성공"},
             // S
-            {title:"리스본 증권거래소의 제왕", rarity:75},
-            {title:"동인도 무역의 떠오르는 거성", rarity:72},
-            {title:"폭풍을 뚫은 대박 투자자", rarity:70},
-            {title:"목숨을 건 올인 도박사", rarity:68},
-            {title:"팔방미인 전천후 투자자", rarity:66},
-            {title:"무사귀환의 선단장", rarity:64},
-            {title:"향료와 은의 이중 제왕", rarity:62},
-            {title:"윤리적 사회적 공헌가 (ESG 선구자)", rarity:60},
+            {title:"리스본 증권거래소의 제왕", rarity:75, hint:"최종 자산 7,000 레알 이상 달성"},
+            {title:"동인도 무역의 떠오르는 거성", rarity:72, hint:"최종 자산 6,000 레알 이상 달성"},
+            {title:"폭풍을 뚫은 대박 투자자", rarity:70, hint:"배율 4.0 이상인 선박이 항해에 성공"},
+            {title:"목숨을 건 올인 도박사", rarity:68, hint:"단일 선박에 자산의 85% 이상 집중 투자"},
+            {title:"팔방미인 전천후 투자자", rarity:66, hint:"8척 선단 모두에 투자 경험"},
+            {title:"무사귀환의 선단장", rarity:64, hint:"3척 이상 투자 + 투자 선박 전원 생환 + 최종 자산 1,500 레알 이상"},
+            {title:"향료와 은의 이중 제왕", rarity:62, hint:"골든 하인드(B) + 엘카노 전함(C) 합계가 최종 자산의 60% 이상"},
+            {title:"윤리적 사회적 공헌가 (ESG 선구자)", rarity:60, hint:"노예선(E) 미투자 + 도덕지수 6점 이상"},
             // A
-            {title:"황금 나침반을 쥔 항해 투자자", rarity:55},
-            {title:"동방 비단길의 마지막 도박사", rarity:53},
-            {title:"향료 군도의 숨은 권력자", rarity:51},
-            {title:"포토시 은광의 진짜 주인", rarity:49},
-            {title:"신대륙 구황식물 보급왕", rarity:47},
-            {title:"인도 후추 무역의 선구자", rarity:45},
-            {title:"카리브해 설탕 농장의 큰손", rarity:43},
-            {title:"리스본 항구의 떠오르는 큰손", rarity:40},
-            {title:"움직이는 인간 포트폴리오", rarity:38},
-            {title:"단 하나의 별을 따른 자", rarity:36},
-            {title:"안전제일 리스크 관리자", rarity:34},
-            {title:"위험을 먹고 사는 모험가", rarity:34},
+            {title:"황금 나침반을 쥔 항해 투자자", rarity:55, hint:"최종 자산 5,000 레알 이상 달성"},
+            {title:"동방 비단길의 마지막 도박사", rarity:53, hint:"빅토리아 호(F) 수익이 최종 자산의 45% 이상"},
+            {title:"향료 군도의 숨은 권력자", rarity:51, hint:"골든 하인드 호(B) 수익이 최종 자산의 45% 이상"},
+            {title:"포토시 은광의 진짜 주인", rarity:49, hint:"엘카노의 전함(C) 수익이 최종 자산의 45% 이상"},
+            {title:"신대륙 구황식물 보급왕", rarity:47, hint:"산 프란시스코 호(D) 수익이 최종 자산의 55% 이상"},
+            {title:"인도 후추 무역의 선구자", rarity:45, hint:"산타 마리아 호(A) 수익이 최종 자산의 55% 이상"},
+            {title:"카리브해 설탕 농장의 큰손", rarity:43, hint:"이스파뇰라 호(G) 수익이 최종 자산의 45% 이상"},
+            {title:"리스본 항구의 떠오르는 큰손", rarity:40, hint:"최종 자산 4,000 레알 이상 달성"},
+            {title:"움직이는 인간 포트폴리오", rarity:38, hint:"7척 이상 선단에 투자 경험"},
+            {title:"단 하나의 별을 따른 자", rarity:36, hint:"딱 1척 선단에만 투자"},
+            {title:"안전제일 리스크 관리자", rarity:34, hint:"성공률 최고 선박에 가장 많이 투자"},
+            {title:"위험을 먹고 사는 모험가", rarity:34, hint:"성공률 최저 선박에 가장 많이 투자"},
             // B
-            {title:"대서양 무역의 안정적 강자", rarity:30},
-            {title:"신항로 개척의 유망주", rarity:28},
-            {title:"포르투갈 왕실 인증 유능한 상인", rarity:26},
-            {title:"집중투자 신봉자", rarity:24},
-            {title:"선택과 집중의 이원 전략가", rarity:22},
-            {title:"삼각편대 전략가", rarity:22},
-            {title:"균형 잡힌 분산투자 모범생", rarity:20},
-            {title:"불굴의 장기 보유자", rarity:20},
-            {title:"부지런한 시장의 개미", rarity:18},
-            {title:"꾸준한 정석 투자자", rarity:16},
-            {title:"재빠른 손절의 달인", rarity:15},
-            {title:"쉴 새 없는 손가락의 단타 승부사", rarity:14},
-            {title:"한번 사면 절대 안 파는 장기 신봉자", rarity:14},
-            {title:"철저한 배금주의자", rarity:13},
-            {title:"악명 높은 해적 자본가", rarity:13},
-            {title:"영혼 없는 냉혈 자본가", rarity:12},
+            {title:"대서양 무역의 안정적 강자", rarity:30, hint:"최종 자산 3,000 레알 이상 달성"},
+            {title:"신항로 개척의 유망주", rarity:28, hint:"최종 자산 2,500 레알 이상 달성"},
+            {title:"포르투갈 왕실 인증 유능한 상인", rarity:26, hint:"최종 자산 2,000 레알 이상 달성"},
+            {title:"집중투자 신봉자", rarity:24, hint:"단일 선박에 자산의 70~84% 집중 투자"},
+            {title:"선택과 집중의 이원 전략가", rarity:22, hint:"딱 2척 선단에만 투자"},
+            {title:"삼각편대 전략가", rarity:22, hint:"딱 3척 선단에만 투자"},
+            {title:"균형 잡힌 분산투자 모범생", rarity:20, hint:"5~6척 선단에 투자"},
+            {title:"불굴의 장기 보유자", rarity:20, hint:"매도 0회 + 매수 5회 이상 + 최종 자산 1,500 레알 이상"},
+            {title:"부지런한 시장의 개미", rarity:18, hint:"매수+매도 60회 이상 + 최종 자산 3,000 레알 이상"},
+            {title:"꾸준한 정석 투자자", rarity:16, hint:"최종 자산 1,200 레알 이상 + 매수 8회·매도 3회 이상"},
+            {title:"재빠른 손절의 달인", rarity:15, hint:"매도 35회 이상"},
+            {title:"쉴 새 없는 손가락의 단타 승부사", rarity:14, hint:"매수 55회 이상"},
+            {title:"한번 사면 절대 안 파는 장기 신봉자", rarity:14, hint:"매수는 했지만 매도 0회"},
+            {title:"철저한 배금주의자", rarity:13, hint:"도덕지수 -3 이하"},
+            {title:"악명 높은 해적 자본가", rarity:13, hint:"도덕지수 -6 이하"},
+            {title:"영혼 없는 냉혈 자본가", rarity:12, hint:"노예선(E)에 누적 500 레알 이상 투자"},
             // C
-            {title:"완벽한 평화 본전치기 선구자", rarity:10},
-            {title:"성공적인 첫 항해를 마친 신참 거상", rarity:9},
-            {title:"잔잔한 파도 위의 알찬 수익가", rarity:8},
-            {title:"현금이 왕이다", rarity:7},
-            {title:"지중해의 애처로운 망령", rarity:7},
-            {title:"저주받은 항로의 선주", rarity:6},
-            {title:"풍랑 속 생존자", rarity:6},
-            {title:"원금 수성에 성공한 신중론자", rarity:5},
-            {title:"절반의 손실을 막아낸 침착한 투자자", rarity:4},
-            {title:"쓰라린 교훈을 얻은 견습 상인", rarity:3},
-            {title:"풍랑에 휩쓸린 비운의 선주", rarity:2},
-            {title:"바다 밑바닥 개척의 기부천사", rarity:2},
-            {title:"바다의 기부 천사 (알거지)", rarity:2},
-            {title:"항구를 떠나지 않은 겁쟁이", rarity:1},
-            {title:"구경꾼 거상", rarity:1},
-            {title:"평범한 시장의 관찰자", rarity:1},
+            {title:"완벽한 평화 본전치기 선구자", rarity:10, hint:"최종 자산이 950~1,050 레알 (원금 근처)"},
+            {title:"성공적인 첫 항해를 마친 신참 거상", rarity:9, hint:"최종 자산 1,700 레알 이상 달성"},
+            {title:"잔잔한 파도 위의 알찬 수익가", rarity:8, hint:"최종 자산 1,400 레알 이상 달성"},
+            {title:"현금이 왕이다", rarity:7, hint:"보유 현금이 최종 자산의 80% 이상 + 최종 자산 1,000 레알 초과"},
+            {title:"지중해의 애처로운 망령", rarity:7, hint:"레반트의 별 호(H) 수익이 최종 자산의 55% 이상"},
+            {title:"저주받은 항로의 선주", rarity:6, hint:"3척 이상 선박 성공률 0% 파산"},
+            {title:"풍랑 속 생존자", rarity:6, hint:"최종 자산 800~1,199 레알 + 매수 5회·3척 이상 투자"},
+            {title:"원금 수성에 성공한 신중론자", rarity:5, hint:"최종 자산 1,100 레알 이상 달성"},
+            {title:"절반의 손실을 막아낸 침착한 투자자", rarity:4, hint:"최종 자산 800 레알 이상 달성"},
+            {title:"쓰라린 교훈을 얻은 견습 상인", rarity:3, hint:"최종 자산 600 레알 이상 달성"},
+            {title:"풍랑에 휩쓸린 비운의 선주", rarity:2, hint:"최종 자산 400 레알 이상 달성"},
+            {title:"바다 밑바닥 개척의 기부천사", rarity:2, hint:"최종 자산 400 레알 미만"},
+            {title:"바다의 기부 천사 (알거지)", rarity:2, hint:"올인 경험이 있으면서 최종 자산 300 레알 미만"},
+            {title:"항구를 떠나지 않은 겁쟁이", rarity:1, hint:"한 번도 투자하지 않음 (매수 0회)"},
+            {title:"구경꾼 거상", rarity:1, hint:"현금 900 레알 이상 보유하면서 투자 선단 수 0"},
+            {title:"평범한 시장의 관찰자", rarity:1, hint:"특별한 조건 없이 게임 종료"},
         ];
 
         function showRouteModal(shipId) {
@@ -3457,12 +3547,19 @@
             modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
 
             function renderModal(myTitleSet) {
+                // 로컬 저장된 칭호별 desc 맵 구성
+                const titleDescMap = {};
+                try {
+                    const stored = JSON.parse(localStorage.getItem(localKey) || '[]');
+                    stored.forEach(function(t){ if(t.title && t.desc) titleDescMap[t.title] = t.desc; });
+                } catch(e){}
                 const lv = calcExpAndLevel(Array.from(myTitleSet));
                 let rows = '';
                 ALL_TITLES_LIST.forEach(function(entry) {
                     const rl = getTitleRarityLabel(entry.rarity);
                     const owned = myTitleSet.has(entry.title);
-                    rows += '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';">'
+                    const hintText = entry.hint ? ('📋 획득 조건: ' + entry.hint) : '';
+                    rows += '<div title="' + hintText.replace(/"/g,'&quot;') + '" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';cursor:help;">'
                       + '<span style="min-width:32px;font-size:9px;font-weight:900;color:'+rl.color+';background:'+rl.color+'22;border:1px solid '+rl.color+'44;border-radius:3px;padding:1px 4px;text-align:center;">['+rl.label+']</span>'
                       + '<span style="font-size:11px;color:' + (owned ? '#2c1a04' : '#9e7a4a') + ';font-weight:' + (owned ? '700' : '400') + ';margin-left:6px;">'
                       + (owned ? '✅ ' : '🔒 ') + entry.title + '</span>'
