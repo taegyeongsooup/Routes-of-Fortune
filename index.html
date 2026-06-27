@@ -44,31 +44,35 @@
         .header-title {
             font-family: 'Cinzel', 'Noto Sans KR', serif;
         }
-        /* 투자 중인(보유 중인) 선박 카드 - 초록 발광 효과 + 배경 강조 */
+        /* 투자 중인 선박 카드 - 황금색 발광 */
         @keyframes owned-glow {
-            0%, 100% { box-shadow: 0 0 8px 2px rgba(34, 197, 94, 0.65), inset 0 0 16px rgba(34, 197, 94, 0.14); }
-            50% { box-shadow: 0 0 28px 8px rgba(34, 197, 94, 0.98), inset 0 0 28px rgba(34, 197, 94, 0.24); }
+            0%, 100% { box-shadow: 0 0 8px 2px rgba(234,179,8,0.70), inset 0 0 14px rgba(234,179,8,0.18); }
+            50%       { box-shadow: 0 0 26px 8px rgba(234,179,8,1.0), inset 0 0 26px rgba(234,179,8,0.32); }
         }
         .ship-card.is-owned {
-            border-color: rgba(34, 197, 94, 0.92) !important;
+            border-color: rgba(234,179,8,0.95) !important;
             border-width: 2px !important;
             animation: owned-glow 2.0s ease-in-out infinite;
-            background: linear-gradient(145deg, #d1fae5, #a7f3d0, #6ee7b7) !important;
+            background: linear-gradient(145deg, #fefce8, #fef08a, #fde047) !important;
         }
-        /* 투자 중인 카드 내부 배경 */
-        .ship-card.is-owned .bg-slate-950\/40 {
-            background: rgba(6, 95, 70, 0.15) !important;
-        }
-        .ship-card.is-owned .bg-slate-950\/60 {
-            background: rgba(6, 95, 70, 0.12) !important;
-        }
-        /* 투자 선박 카드 텍스트 가독성 */
-        .ship-card.is-owned h4 {
-            color: #064e3b !important;
-        }
+        .ship-card.is-owned .bg-slate-950\/40 { background: rgba(113,85,0,0.12) !important; }
+        .ship-card.is-owned .bg-slate-950\/60 { background: rgba(113,85,0,0.10) !important; }
+        .ship-card.is-owned h4              { color: #713f12 !important; }
         .ship-card.is-owned .text-slate-500,
-        .ship-card.is-owned .text-slate-400 {
-            color: #065f46 !important;
+        .ship-card.is-owned .text-slate-400 { color: #92400e !important; }
+
+        /* 침몰 임박 선박 (성공률 10% 이하) 빨간 깜빡임 */
+        @keyframes danger-pulse {
+            0%, 100% { box-shadow: 0 0 6px 2px rgba(239,68,68,0.60); border-color: rgba(239,68,68,0.85) !important; }
+            50%       { box-shadow: 0 0 20px 6px rgba(239,68,68,0.95); border-color: rgba(239,68,68,1.0) !important; }
+        }
+        .ship-card.is-danger {
+            border-width: 2px !important;
+            animation: danger-pulse 1.0s ease-in-out infinite !important;
+            background: linear-gradient(145deg, #fff1f2, #ffe4e6, #fecdd3) !important;
+        }
+        .ship-card.is-owned.is-danger {
+            animation: danger-pulse 1.0s ease-in-out infinite !important;
         }
         /* 손익 컬러 규칙: 이득(빨강) / 손해(파랑) - 사용자 요청 반영 */
         .pnl-profit { color: #f87171 !important; }
@@ -700,7 +704,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(2.7v)
+                대항해 시대: 운명을 건 항해(2.8v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -1052,7 +1056,7 @@
         // 아래 URL을 본인의 Google Apps Script 웹앱 배포 URL로 교체하세요.
         // (Google Sheets > 확장 프로그램 > Apps Script 에서 webhook 코드를 배포한 뒤 "웹앱 URL"을 붙여넣으면
         //  게임 결과 제출 시 자동으로 칭호 기록이 시트에 누적되고, 로비 화면의 명예의 전당 TOP10도 이 URL에서 데이터를 읽어옵니다.)
-        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzodUtwDy5AStfTpexJrYvv-V8OMY90sMbF7xeDd718DZDaolTOOvgf4dJgakSgh3xs/exec"
+        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxAGq1N9ak_RV4mY0iOcYYF3yMAdJ8KvG5g7vZLu5QzGkMQQF48NmsV7MzH_bbQVmz2/exec"
 
         // ----------------------------------------------------
         // PLAYER IDENTITY (반 / 번호 / 이름)
@@ -1811,6 +1815,12 @@
             // 시트에서 내 플레이 이력 동기화 (경험치/레벨 정확도 보장)
             await syncPlayerDataFromSheet(classVal, numberVal, nameVal);
 
+            // 새 게임 시작 시 활성 효과 초기화
+            activeKeyEffect = null;
+            keyUsedThisRound = false;
+            const banner = document.getElementById('active-key-effect-banner');
+            if (banner) banner.style.display = 'none';
+
             loadGoldenKeys();
             loadGrantedKeyLevels();
             updateGoldenKeyUI();
@@ -2027,11 +2037,12 @@
         function drawWeightedSituation() {
             // 예언서 강제 지정
             if (activeKeyEffect && activeKeyEffect.type === 'prophecy' && activeKeyEffect.forcedSitIndex !== undefined) {
-                const forced = situations[activeKeyEffect.forcedSitIndex];
-                setActiveKeyEffect(null);
+                const forcedIdx = activeKeyEffect.forcedSitIndex; // 소비 전에 먼저 저장
+                const forced = situations[forcedIdx];
+                setActiveKeyEffect(null); // 효과 소비
                 if (forced) {
                     usedSituationTitles.add(forced.title);
-                    return { situation: forced, index: activeKeyEffect.forcedSitIndex };
+                    return { situation: forced, index: forcedIdx }; // 저장해둔 idx 사용
                 }
             }
             if (currentForecastPool.length === 0) {
@@ -2085,18 +2096,33 @@
             currentForecastPool.forEach((p, idx) => {
                 const c = colorMap[idx] || colorMap[3];
                 const safeDesc = (p.situation.desc || '').replace(/`/g, "'");
-                // 상단 행(0,1)은 툴팁이 아래로, 하단 행(2,3)은 위로
                 const tooltipPos = (idx < 2)
                     ? 'top: calc(100% + 6px); bottom: auto;'
                     : 'bottom: calc(100% + 6px); top: auto;';
                 const sitIdx = situations.indexOf(p.situation);
+
+                // 예언서 활성 상태 시 선택된 카드 강조
+                const isProphecyActive = activeKeyEffect && activeKeyEffect.type === 'prophecy';
+                const isSelected = isProphecyActive && activeKeyEffect.forcedSitIndex === sitIdx;
+                const cardStyle = isSelected
+                    ? 'background:rgba(200,150,12,0.25);border-color:rgba(200,150,12,0.80);'
+                    : isProphecyActive
+                        ? 'cursor:pointer;'
+                        : '';
+                const selectedBadge = isSelected
+                    ? `<span style="font-size:9px;font-weight:900;color:#f59e0b;background:rgba(200,150,12,0.20);border:1px solid rgba(200,150,12,0.50);border-radius:4px;padding:1px 5px;">✅ 예약됨</span>`
+                    : isProphecyActive
+                        ? `<span style="font-size:9px;color:#9e7a4a;">클릭해 선택</span>`
+                        : '';
+
                 const cardHTML = `
-                    <div class="forecast-card-wrap bg-slate-900/70 border border-slate-800 rounded-lg p-1.5 flex flex-col gap-0.5 cursor-help" onclick="selectProphecySituation(${sitIdx})">
+                    <div class="forecast-card-wrap bg-slate-900/70 border border-slate-800 rounded-lg p-1.5 flex flex-col gap-0.5 ${isProphecyActive ? 'cursor-pointer' : 'cursor-help'}" style="${cardStyle}" onclick="selectProphecySituation(${sitIdx})">
                         <div class="forecast-tooltip" style="${tooltipPos}">${safeDesc}</div>
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-black px-1.5 py-0.5 rounded border ${c.badge}">${p.weight}% 확률</span>
+                            ${selectedBadge}
                         </div>
-                        <p class="text-[11px] font-bold text-slate-200 leading-tight line-clamp-2">${p.situation.title}</p>
+                        <p class="text-[11px] font-bold leading-tight line-clamp-2" style="color:${isSelected ? '#fde047' : '#e2e8f0'};">${p.situation.title}</p>
                         <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5">
                             <div class="${c.bar} h-full" style="width:${p.weight}%"></div>
                         </div>
@@ -2158,6 +2184,7 @@
             if (shouldTriggerEvent) {
                 triggeredEventRounds.push(nextRound);
                 pendingRoundAfterEvent = nextRound; // 돌발극 종료 후 이 라운드로 진입
+                // 예언서 효과가 있으면 보존 — 돌발 후 정규 라운드에서 적용됨
                 showNewspaperModal(false, true);
             } else {
                 currentRound = nextRound;
@@ -2356,21 +2383,45 @@
             }
         }
 
-        // 신문 모달 속에서 돌발 선택지 선택 처리
+        // 돌발 이벤트별 선박 보호 맵
+        // 선택1(opt1) / 선택2(opt2)별로 어느 선박이 호재(pos)/악재(neg)인지 정의
+        const SUDDEN_EVENT_PROTECTION = [
+            // 0: 마젤란 긴급 자금
+            { 1: {F:'pos'}, 2: {F:'neg'} },
+            // 1: 바티칸 노예선 금지
+            { 1: {E:'neg'}, 2: {E:'pos', A:'neg'} },
+            // 2: 해적 드레이크 기습 제안
+            { 1: {B:'pos', C:'neg'}, 2: {H:'pos', B:'neg'} },
+            // 3: 사탕수수 농장 학대 파동
+            { 1: {G:'pos'}, 2: {G:'neg'} },
+            // 4: 후추 돌가루 발각
+            { 1: {A:'pos'}, 2: {A:'neg'} },
+            // 5: 강제 징집 논란
+            { 1: {D:'pos'}, 2: {F:'pos', B:'pos', D:'neg'} },
+            // 6: 왕실 의사 뇌물
+            { 1: {A:'pos'}, 2: {} },
+            // 7: 베네치아 길드 합병
+            { 1: {H:'pos', C:'neg', D:'neg'}, 2: {C:'pos', D:'pos', H:'neg'} },
+            // 8: 아즈텍 지도자 청원
+            { 1: {G:'pos', C:'neg'}, 2: {C:'pos', G:'neg'} },
+            // 9: 산 프란시스코 호 조난
+            { 1: {D:'pos'}, 2: {D:'neg'} },
+            // 10: 무적함대 분담금
+            { 1: {}, 2: {} },  // 전 선박 동일 적용 — action에서 처리
+            // 11: 괴혈병 돌발
+            { 1: {}, 2: {} },  // 전 선박 동일 적용 — action에서 처리
+        ];
+
         function handleOptionChoiceInNews(choiceNum) {
             if (!currentActiveEvent) return;
 
-            // 돈을 지불하는 선택(1번)인데 현금 부족 시 반대 선택으로 자동 전환
             let effectiveChoice = choiceNum;
             if (choiceNum === 1 && currentActiveEvent.action.toString().includes('cash -=')) {
-                // action 코드에 'cash -=' 포함 = 돈 지불 선택
-                // 실제 지불 금액 추출 시도
                 const cashMatch = currentActiveEvent.action.toString().match(/cash < (\d+)/);
                 if (cashMatch) {
                     const required = parseInt(cashMatch[1]);
                     if (cash < required) {
                         effectiveChoice = 2;
-                        // 알림
                         const warn = document.createElement('div');
                         warn.id = 'cash-shortage-warning';
                         warn.style.cssText = 'color:#f87171;font-weight:bold;font-size:12px;margin-bottom:6px;';
@@ -2381,9 +2432,28 @@
             }
 
             const feedback = currentActiveEvent.action(effectiveChoice);
-            
-            // 전 모든 선박의 가치 동반 미세 변동 발생
-            applyGlobalMarketFluctuations(null, null);
+
+            // 돌발 이벤트 인덱스로 선박 보호 맵 조회
+            const evIdx = suddenEvents.indexOf(currentActiveEvent);
+            const protection = (evIdx >= 0 && SUDDEN_EVENT_PROTECTION[evIdx])
+                ? (SUDDEN_EVENT_PROTECTION[evIdx][effectiveChoice] || {})
+                : {};
+
+            // 글로벌 랜덤 변동 — 선택과 관련된 선박은 방향 고정
+            for (const shipId in ships) {
+                if (ships[shipId]._ruined) continue;
+                if (activeKeyEffect && activeKeyEffect.type === 'market_fix') continue;
+
+                let probDelta = Math.floor(Math.random() * 14) - 6;  // -6 ~ +7
+                if (protection[shipId] === 'pos') probDelta =  Math.abs(probDelta) + 1;  // 반드시 +
+                else if (protection[shipId] === 'neg') probDelta = -(Math.abs(probDelta) + 1); // 반드시 -
+
+                ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb + probDelta));
+                if (ships[shipId].currentProb <= 0) ships[shipId]._ruined = true;
+
+                const multDelta = Math.random() * 0.6 - 0.3;
+                ships[shipId].currentMult = Math.max(0.3, Math.round((ships[shipId].currentMult + multDelta) * 10) / 10);
+            }
 
             for (const shipId in ships) {
                 ships[shipId].currentProb = Math.max(0, Math.min(98, ships[shipId].currentProb));
@@ -2391,16 +2461,13 @@
                 ships[shipId].currentMult = Math.max(0.3, Math.round(ships[shipId].currentMult * 10) / 10);
             }
 
-            // 기사 내용을 선택 대처 피드백으로 변경
             document.getElementById('news-modal-desc').innerHTML = `<span class="text-amber-700 font-bold block mb-1"><i class="fa-solid fa-check-double"></i> 투자자 의결 집행 보고:</span> ${feedback}`;
             document.getElementById('news-modal-options').classList.add('hidden');
-            
-            // 닫기 버튼을 노출시켜서 대처 결과 확인 후 거래창으로 가도록 유도
+
             const closeBtn = document.getElementById('btn-close-newspaper');
             closeBtn.classList.remove('hidden');
             closeBtn.innerText = "상황 대처 완료 (투자창 열기)";
 
-            // 왼쪽 요약 패널도 동일한 결재 결과 기록으로 동기화
             document.getElementById('news-type-badge').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 animate-pulse"></i> 돌발 사태 결재 대처 완료`;
             document.getElementById('news-title').textContent = currentActiveEvent.title;
             document.getElementById('news-desc').textContent = feedback;
@@ -2506,7 +2573,7 @@
                 const trendGraphHTML = createTrendGraph(s.history);
 
                 const cardHTML = `
-                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} bg-gradient-to-br ${s.bg} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;">
+                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} ${(!s._ruined && s.currentProb <= 10 && s.currentProb > 0) ? 'is-danger' : ''} bg-gradient-to-br ${s.bg} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;">
                         ${unethicalOverlay}
                         ${ruinedOverlay}
                         <div class="flex flex-col min-h-0">
@@ -3253,9 +3320,7 @@
                 return;
             }
             const pwKey = `aov_pw_${data.playerClass}_${data.playerNumber}_${data.playerName}`;
-            // localStorage엔 이미 해시가 저장돼 있으므로 그대로 사용
             const pw = localStorage.getItem(pwKey) || '';
-            // 칭호 배열 정리 (중복 제거)
             const titlesArray = Array.isArray(data.titles) && data.titles.length > 0
                 ? [...new Set(data.titles)]
                 : (data.allTitles ? [...new Set(data.allTitles.split(' / ').map(s => s.trim()).filter(Boolean))] : [data.title]);
@@ -3268,25 +3333,37 @@
                 finalAssets: data.finalAssets,
                 grade: data.grade,
                 level: data.level || 1,
-                goldenKeys: goldenKeys,   // 황금열쇠 현재 보유 개수 (기기간 동기화용)
+                goldenKeys: goldenKeys,
                 titles: titlesArray
             };
-            fetch(SHEET_WEBHOOK_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                if (statusEl) {
-                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${titlesArray.length}개 칭호 기록이 명부에 제출되었습니다!`;
-                    statusEl.className = "bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
+
+            // 최대 3회 재시도
+            const trySubmit = async (attempt) => {
+                try {
+                    await fetch(SHEET_WEBHOOK_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (statusEl) {
+                        statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${titlesArray.length}개 칭호 기록이 명부에 제출되었습니다!`;
+                        statusEl.className = "bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
+                    }
+                } catch(e) {
+                    if (attempt < 3) {
+                        if (statusEl) statusEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> 재시도 중... (${attempt}/3)`;
+                        await new Promise(r => setTimeout(r, 1500 * attempt));
+                        await trySubmit(attempt + 1);
+                    } else {
+                        if (statusEl) {
+                            statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> 제출 실패. 네트워크를 확인하세요.`;
+                            statusEl.className = "bg-amber-950/30 border border-amber-800/60 text-amber-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
+                        }
+                    }
                 }
-            }).catch(() => {
-                if (statusEl) {
-                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> 제출 중 오류. 네트워크를 확인해주세요.`;
-                    statusEl.className = "bg-amber-950/30 border border-amber-800/60 text-amber-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
-                }
-            });
+            };
+            await trySubmit(1);
         }
 
         // 로비 화면의 칭호 수집 명예의 전당(TOP10) 로드
@@ -3645,6 +3722,11 @@
             usedSituationTitles = new Set();
             window._pendingEventRound = null;
             currentForecastPool = [];
+            keyUsedThisRound = false;
+            // 활성 효과 완전 초기화 (다른 아이디로 접속해도 초기화)
+            activeKeyEffect = null;
+            const banner = document.getElementById('active-key-effect-banner');
+            if (banner) banner.style.display = 'none';
 
             for (const key in portfolio) {
                 portfolio[key] = 0;
@@ -3769,7 +3851,7 @@
         const KEY_EFFECTS = [
             { type:'market_fix',    label:'시장 동결',       desc:'다음 라운드 모든 선박의 글로벌 노이즈가 0으로 고정됩니다.' },
             { type:'manipulation',  label:'시세 조작',       desc:'원하는 선박 1척의 성공률을 +20 부스트합니다. 선박을 클릭해 선택하세요.' },
-            { type:'prophecy',      label:'예언서',          desc:'다음 라운드에 등장할 상황 4가지 중 1개를 직접 선택합니다. 상황 카드를 클릭해 선택하세요.' },
+            { type:'prophecy',      label:'예언서',          desc:'다음 정규 라운드에 등장할 상황 4가지 중 1개를 직접 선택합니다. 상황 카드를 클릭해 선택하세요. 돌발 상황이 끼어들어도 예언서 효과는 보존되어 다음 정규 라운드에 반드시 적용됩니다.' },
             { type:'big_gain',      label:'뜻밖의 개이득',   desc:'자본 1,000 레알을 즉시 획득합니다.' },
             { type:'small_gain',    label:'소확행',          desc:'자본 500 레알을 즉시 획득합니다.' },
             { type:'immunity',      label:'부정 조사 면제',  desc:'다음 라운드 비윤리 선박 투자에 도덕지수 패널티가 없습니다.' },
@@ -3951,6 +4033,33 @@
                 showCustomAlert('⚠️ 이번 라운드에 이미 황금 열쇠를 사용했습니다. 다음 라운드에 사용하세요!');
                 return;
             }
+
+            // 활성 효과가 있을 때 추가 사용 시 경고
+            if (activeKeyEffect) {
+                const confirmEl = document.createElement('div');
+                confirmEl.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);display:flex;align-items:center;justify-content:center;padding:16px;';
+                confirmEl.innerHTML = `
+                <div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(239,68,68,0.55);border-radius:16px;width:100%;max-width:360px;padding:24px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:6px;">⚠️</div>
+                    <div style="font-weight:900;font-size:15px;color:#f87171;margin-bottom:8px;">활성 효과 덮어쓰기 경고</div>
+                    <div style="font-size:12px;color:#9e7a4a;margin-bottom:16px;">
+                        현재 <b style="color:#f59e0b">[${activeKeyEffect.label}]</b> 효과가 활성화 중입니다.<br>
+                        새 열쇠를 사용하면 <b style="color:#f87171">기존 효과가 즉시 삭제</b>됩니다.<br>계속하시겠습니까?
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:center;">
+                        <button onclick="(function(el){ el.closest('[style*=fixed]').remove(); activeKeyEffect=null; setActiveKeyEffect(null); openUseKeyModal(); })(this)"
+                            style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:900;font-size:12px;cursor:pointer;">기존 효과 삭제 후 사용</button>
+                        <button onclick="this.closest('[style*=fixed]').remove()"
+                            style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:10px 20px;font-weight:700;font-size:12px;cursor:pointer;">취소</button>
+                    </div>
+                </div>`;
+                document.body.appendChild(confirmEl);
+                return;
+            }
+            openUseKeyModal();
+        }
+
+        function openUseKeyModal() {
             // 확인창
             const modal = document.createElement('div');
             modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -4032,24 +4141,53 @@
             if (!activeKeyEffect || activeKeyEffect.type !== 'prophecy') return false;
             const sit = situations[sitIndex];
             if (!sit) return false;
+
+            // 이미 선택된 상황이 있고 다른 걸 누른 경우 → 변경 확인
+            if (activeKeyEffect.forcedSitIndex !== undefined && activeKeyEffect.forcedSitIndex !== sitIndex) {
+                const prevSit = situations[activeKeyEffect.forcedSitIndex];
+                const confirmEl = document.createElement('div');
+                confirmEl.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:16px;';
+                confirmEl.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:380px;padding:24px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:6px;">📜</div>
+                    <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:10px;">예언서 선택 변경</div>
+                    <div style="font-size:11px;color:#9e7a4a;margin-bottom:6px;">현재 선택된 상황:</div>
+                    <div style="font-size:12px;color:#f87171;font-weight:700;margin-bottom:10px;">❌ ${prevSit ? prevSit.title : '(알 수 없음)'}</div>
+                    <div style="font-size:11px;color:#9e7a4a;margin-bottom:6px;">변경할 상황:</div>
+                    <div style="font-size:12px;color:#34d399;font-weight:700;margin-bottom:16px;">✅ ${sit.title}</div>
+                    <div style="display:flex;gap:10px;justify-content:center;">
+                        <button onclick="applyProphecy(${sitIndex},this)" style="background:linear-gradient(135deg,#7a4a1a,#c8960c);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-weight:900;font-size:12px;cursor:pointer;">변경하기</button>
+                        <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:8px 20px;font-weight:700;font-size:12px;cursor:pointer;">유지하기</button>
+                    </div>
+                </div>`;
+                document.body.appendChild(confirmEl);
+                return true;
+            }
+
+            // 처음 선택하는 경우
             const confirmEl = document.createElement('div');
             confirmEl.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:16px;';
             confirmEl.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:360px;padding:24px;text-align:center;">
                 <div style="font-size:28px;margin-bottom:6px;">📜</div>
                 <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:8px;">예언서 선택</div>
-                <div style="font-size:12px;color:#9e7a4a;margin-bottom:16px;">다음 라운드 정세로 <b style="color:#e8d5a3">${sit.title}</b>을(를) 강제 지정합니다.</div>
+                <div style="font-size:12px;color:#9e7a4a;margin-bottom:16px;">다음 정규 라운드 정세로 <b style="color:#e8d5a3">${sit.title}</b>을(를) 강제 지정합니다.</div>
                 <div style="display:flex;gap:10px;justify-content:center;">
                     <button onclick="applyProphecy(${sitIndex},this)" style="background:linear-gradient(135deg,#7a4a1a,#c8960c);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-weight:900;font-size:12px;cursor:pointer;">선택</button>
                     <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:8px 20px;font-weight:700;font-size:12px;cursor:pointer;">취소</button>
-                </div></div>`;
+                </div>
+            </div>`;
             document.body.appendChild(confirmEl);
             return true;
         }
         function applyProphecy(sitIndex, btn) {
             btn.closest('[style*=fixed]').remove();
-            // 다음 라운드에 이 상황을 강제 지정
             activeKeyEffect.forcedSitIndex = sitIndex;
-            showCustomAlert(`📜 ${situations[sitIndex].title} — 다음 라운드에 강제 발동 예약됨!`);
+            // 활성 효과 배너 텍스트 업데이트 (선택된 상황 표시)
+            const sit = situations[sitIndex];
+            const txt = document.getElementById('active-key-effect-text');
+            if (txt && sit) txt.textContent = `[예언서] 예약됨: "${sit.title}"`;
+            showCustomAlert(`📜 ${sit ? sit.title : ''} — 다음 정규 라운드에 강제 발동 예약됨!`);
+            // 예측 카드 UI 갱신 (선택된 카드 강조)
+            renderForecastCards();
         }
 
         function quitGame() {
