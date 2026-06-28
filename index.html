@@ -677,14 +677,20 @@
                             <div style="font-size:10px;color:#9e7a4a;margin-bottom:4px;">🎵 배경음</div>
                             <input type="range" id="bgm-slider" min="0" max="100" value="40" 
                                 oninput="setBGMVolume(this.value/100);document.getElementById('bgm-val').textContent=this.value+'%'"
-                                ontouchstart="unlockAudio();setBGMVolume(this.value/100);document.getElementById('bgm-val').textContent=this.value+'%'"
-                                ontouchmove="(function(e){e.preventDefault();var t=e.touches[0];var el=document.getElementById('bgm-slider');var rect=el.getBoundingClientRect();var pct=Math.min(1,Math.max(0,(t.clientX-rect.left)/rect.width));el.value=Math.round(pct*100);setBGMVolume(pct);document.getElementById('bgm-val').textContent=Math.round(pct*100)+'%';})(event)"
-                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;">
+                                ontouchstart="unlockAudio();"
+                                ontouchmove="(function(e){e.preventDefault();e.stopPropagation();var t=e.touches[0];var el=document.getElementById('bgm-slider');var rect=el.getBoundingClientRect();var pct=Math.min(1,Math.max(0,(t.clientX-rect.left)/rect.width));var val=Math.round(pct*100);el.value=val;setBGMVolume(pct);document.getElementById('bgm-val').textContent=val+'%';})(event)"
+                                ontouchend="saveVolumeSettings()"
+                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;-webkit-appearance:none;">
                             <span id="bgm-val" style="font-size:10px;color:#7a5c2e;">40%</span>
                         </div>
                         <div>
                             <div style="font-size:10px;color:#9e7a4a;margin-bottom:4px;">⚡ 효과음</div>
-                            <input type="range" id="sfx-slider" min="0" max="100" value="70" oninput="sfxVolume=this.value/100;document.getElementById('sfx-val').textContent=this.value+'%';saveVolumeSettings()" style="width:100%;accent-color:#c8960c;cursor:pointer;">
+                            <input type="range" id="sfx-slider" min="0" max="100" value="70"
+                                oninput="sfxVolume=this.value/100;document.getElementById('sfx-val').textContent=this.value+'%';saveVolumeSettings()"
+                                ontouchstart="unlockAudio();"
+                                ontouchmove="(function(e){e.preventDefault();e.stopPropagation();var t=e.touches[0];var el=document.getElementById('sfx-slider');var rect=el.getBoundingClientRect();var pct=Math.min(1,Math.max(0,(t.clientX-rect.left)/rect.width));var val=Math.round(pct*100);el.value=val;sfxVolume=pct;document.getElementById('sfx-val').textContent=val+'%';})(event)"
+                                ontouchend="saveVolumeSettings()"
+                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;-webkit-appearance:none;">
                             <span id="sfx-val" style="font-size:10px;color:#7a5c2e;">70%</span>
                         </div>
                     </div>
@@ -712,7 +718,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(2.01v)
+                대항해 시대: 운명을 건 항해(3.02v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -1064,7 +1070,7 @@
         // 아래 URL을 본인의 Google Apps Script 웹앱 배포 URL로 교체하세요.
         // (Google Sheets > 확장 프로그램 > Apps Script 에서 webhook 코드를 배포한 뒤 "웹앱 URL"을 붙여넣으면
         //  게임 결과 제출 시 자동으로 칭호 기록이 시트에 누적되고, 로비 화면의 명예의 전당 TOP10도 이 URL에서 데이터를 읽어옵니다.)
-        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzR_PZUn2ln8XO56jQVJ9VL6eX3TxG01M9QqhBAbFLkYPyY-cijvWl9b1tqgCxabz45/exec"
+        const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz4sRurfnAz2YGmYTS2Qc17mM5FJH22tHLSMFpOdiXbxmn_RUHZnwLQIfu_nMCvCS3o/exec"
 
         // ----------------------------------------------------
         // PLAYER IDENTITY (반 / 번호 / 이름)
@@ -1834,9 +1840,30 @@
             document.getElementById('screen-lobby').classList.add('hidden');
             document.getElementById('screen-game').classList.remove('hidden');
             document.getElementById('main-header').style.display = 'flex';
+
+            // 로딩 오버레이 표시
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'loading-overlay';
+            loadingOverlay.style.cssText = `
+                position:fixed;inset:0;z-index:99999;
+                background:rgba(14,7,0,0.82);
+                display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:16px;
+                backdrop-filter:blur(4px);
+            `;
+            loadingOverlay.innerHTML = `
+                <div style="font-size:36px;animation:spin 1.2s linear infinite;">⚙️</div>
+                <div style="color:#f59e0b;font-weight:900;font-size:16px;letter-spacing:2px;">항로를 개척하는 중...</div>
+                <div style="color:#9e7a4a;font-size:12px;">항해 기록을 불러오고 있습니다</div>
+                <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
+            `;
+            document.body.appendChild(loadingOverlay);
             
             // 시트에서 내 플레이 이력 동기화 (경험치/레벨 정확도 보장)
             await syncPlayerDataFromSheet(classVal, numberVal, nameVal);
+
+            // 로딩 오버레이 제거
+            loadingOverlay.remove();
 
             // 새 게임 시작 시 활성 효과 초기화
             activeKeyEffect = null;
@@ -1850,10 +1877,8 @@
             loadGrantedKeyLevels();
             updateGoldenKeyUI();
 
-            currentRound = 0; // 준비단계 (Round 0) 진입
-            generateForecastCards(); // 1라운드로 넘어갈 때 적용될 첫 예측 카드 생성
-            
-            // 준비 단계 선제 신문 띄우기
+            currentRound = 0;
+            generateForecastCards();
             showNewspaperModal(true, false);
             updateUI();
         }
@@ -1934,21 +1959,6 @@
         // ----------------------------------------------------
         function buyShares(shipId, qty) {
             // 시세 조작 효과 처리
-            if (activeKeyEffect && activeKeyEffect.type === 'manipulation') {
-                const sName = ships[shipId] ? ships[shipId].name : shipId;
-                const confirmEl = document.createElement('div');
-                confirmEl.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:16px;';
-                confirmEl.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:340px;padding:24px;text-align:center;">
-                    <div style="font-size:28px;margin-bottom:6px;">⚙️</div>
-                    <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:8px;">시세 조작 적용</div>
-                    <div style="font-size:12px;color:#9e7a4a;margin-bottom:16px;"><b style="color:#e8d5a3">${sName}</b>의 성공률을 +20 부스트합니다.</div>
-                    <div style="display:flex;gap:10px;justify-content:center;">
-                        <button onclick="applyManipulation('${shipId}',this)" style="background:linear-gradient(135deg,#7a4a1a,#c8960c);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-weight:900;font-size:12px;cursor:pointer;">적용</button>
-                        <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:8px 20px;font-weight:700;font-size:12px;cursor:pointer;">취소</button>
-                    </div></div>`;
-                document.body.appendChild(confirmEl);
-                return;
-            }
             qty = Math.max(1, parseInt(qty) || 1);
             const currentPrice = calculateSharePrice(ships[shipId]);
 
@@ -4221,7 +4231,24 @@
             if (!eff || eff._used) return;
             eff._used = true;
             playSound('golden_key');
-            if (eff.type === 'market_fix') {
+            if (eff.type === 'manipulation') {
+                // 선박 선택 모달 띄우기
+                const modal2 = document.createElement('div');
+                modal2.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);display:flex;align-items:center;justify-content:center;padding:16px;';
+                const shipBtns = Object.keys(ships).filter(id => !ships[id]._ruined).map(id => `
+                    <button onclick="applyManipulationFromDrawn('${id}',${idx},this)"
+                        style="background:rgba(200,150,12,0.15);border:1px solid rgba(200,150,12,0.4);border-radius:8px;padding:7px 12px;color:#e8d5a3;font-weight:700;font-size:12px;cursor:pointer;text-align:left;">
+                        ⚡ ${ships[id].name} (현재 ${ships[id].currentProb}% → ${Math.min(98,ships[id].currentProb+20)}%)
+                    </button>`).join('');
+                modal2.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:360px;padding:24px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:6px;">⚙️</div>
+                    <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:12px;">시세 조작 — 선박 선택</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${shipBtns}</div>
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:8px 20px;font-weight:700;font-size:12px;cursor:pointer;">취소</button>
+                </div>`;
+                document.body.appendChild(modal2);
+                return; // _used는 실제 선박 선택 후에 처리
+            } else if (eff.type === 'market_fix') {
                 activeKeyEffect = eff;
                 showCustomAlert(`🗝️ [시장 동결] 다음 라운드 글로벌 노이즈가 0으로 고정됩니다.`);
             } else if (eff.type === 'manipulation') {
@@ -4331,10 +4358,25 @@
             btn.closest('[style*=fixed]').remove();
             if (ships[shipId]) {
                 ships[shipId].currentProb = Math.min(98, ships[shipId].currentProb + 20);
-                updateAllShipCards();
+                updateUI();
                 showCustomAlert(`⚙️ ${ships[shipId].name} 성공률 +20 적용 완료!`);
             }
             setActiveKeyEffect(null);
+        }
+
+        // drawnEffects에서 시세조작 선박 선택 후 적용
+        function applyManipulationFromDrawn(shipId, idx, btn) {
+            btn.closest('[style*=fixed]').remove();
+            const eff = drawnEffects[idx];
+            if (!eff) return;
+            eff._used = true;
+            if (ships[shipId]) {
+                ships[shipId].currentProb = Math.min(98, ships[shipId].currentProb + 20);
+                updateUI();
+                playSound('golden_key');
+                showCustomAlert(`⚙️ ${ships[shipId].name} 성공률 +20 적용 완료!`);
+            }
+            renderDrawnEffects();
         }
 
         // 예언서 - 상황 카드 클릭 시 선택 확인창
