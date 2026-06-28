@@ -68,6 +68,13 @@
         .ship-card.is-owned.is-danger {
             animation: danger-pulse 1.0s ease-in-out infinite !important;
         }
+        /* 왕실 제재 매수 불가 선박 */
+        .ship-card.is-blocked {
+            opacity: 0.7;
+            border-color: rgba(107,114,128,0.6) !important;
+            border-width: 2px !important;
+            filter: grayscale(40%);
+        }
         /* 손익 컬러 규칙: 이득(빨강) / 손해(파랑) - 사용자 요청 반영 */
         .pnl-profit { color: #f87171 !important; }
         .pnl-loss { color: #60a5fa !important; }
@@ -718,7 +725,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(3.09v)
+                대항해 시대: 운명을 건 항해(3.11v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -819,7 +826,18 @@
 
                     <div class="mt-2 pt-1.5 border-t border-slate-800/80 flex justify-between items-center text-[12px]">
                         <span class="text-slate-400 font-semibold">비윤리적 상선 투자액:</span>
-                        <span class="font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400" id="stat-unethical-invest">0 레알</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400" id="stat-unethical-invest">0 레알</span>
+                            <div class="relative" id="moral-score-wrap">
+                                <button id="moral-score-btn"
+                                    onmouseenter="showMoralTooltip()"
+                                    onmouseleave="hideMoralTooltip()"
+                                    style="font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;cursor:help;background:rgba(44,26,4,0.2);color:#9e7a4a;border:1px solid rgba(139,90,43,0.35);">
+                                    ⚖️ 도덕 <span id="moral-score-val">0</span>점
+                                </button>
+                                <div id="moral-tooltip" style="display:none;position:fixed;z-index:9999;background:linear-gradient(135deg,rgba(28,14,2,0.98),rgba(44,26,4,0.97));border:1px solid rgba(200,150,12,0.4);border-radius:10px;padding:10px 13px;font-size:11px;color:#e8d5a3;max-width:260px;line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,0.7);pointer-events:none;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1115,7 +1133,7 @@
             B: { id: "B", name: "골든 하인드 호", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 35, currentProb: 35, baseMult: 3.0, currentMult: 3.0, isUnethical: false, isPirate: true, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png", routeImg: "route_B.jpg" },
             C: { id: "C", name: "엘카노의 전함", captain: "엘카노 선장", cargo: "은괴", destination: "페루 포토시", baseProb: 55, currentProb: 55, baseMult: 2.0, currentMult: 2.0, isUnethical: false, icon: "fa-coins", bg: "from-cyan-950/50 to-cyan-900/10", border: "border-cyan-800/60", badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", history: [50], captainImg: "captain_C.jpg", goodsImg: "goods_C.jpg", flagImg: "flag_C.png", routeImg: "route_C.jpg" },
             D: { id: "D", name: "산 프란시스코 호", captain: "고메스 선장", cargo: "감자", destination: "신대륙 연안", baseProb: 75, currentProb: 75, baseMult: 1.2, currentMult: 1.2, isUnethical: false, icon: "fa-wheat-awn", bg: "from-amber-950/50 to-amber-900/10", border: "border-amber-800/60", badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20", history: [50], captainImg: "captain_D.jpg", goodsImg: "goods_D.jpg", flagImg: "flag_D.png", routeImg: "route_D.jpg" },
-            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "카리브해 농장", baseProb: 45, currentProb: 45, baseMult: 4.5, currentMult: 4.5, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
+            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "카리브해 농장", baseProb: 45, currentProb: 45, baseMult: 5.5, currentMult: 5.5, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
             F: { id: "F", name: "빅토리아 호", captain: "마젤란 선장", cargo: "비단", destination: "필리핀 항로", baseProb: 25, currentProb: 25, baseMult: 5.0, currentMult: 5.0, isUnethical: false, icon: "fa-scroll", bg: "from-purple-950/50 to-purple-900/10", border: "border-purple-800/60", badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20", history: [50], captainImg: "captain_F.jpg", goodsImg: "goods_F.jpg", flagImg: "flag_F.png", routeImg: "route_F.jpg" },
             G: { id: "G", name: "이스파뇰라 호", captain: "코르테스 선장", cargo: "설탕", destination: "쿠바 식민지", baseProb: 60, currentProb: 60, baseMult: 1.8, currentMult: 1.8, isUnethical: false, icon: "fa-cubes-stacked", bg: "from-indigo-950/50 to-indigo-900/10", border: "border-indigo-800/60", badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", history: [50], captainImg: "captain_G.jpg", goodsImg: "goods_G.jpg", flagImg: "flag_G.png", routeImg: "route_G.jpg" },
             H: { id: "H", name: "레반트의 별 호", captain: "피에트로 상인", cargo: "면직물", destination: "베네치아 항구", baseProb: 80, currentProb: 80, baseMult: 1.1, currentMult: 1.1, isUnethical: false, icon: "fa-shirt", bg: "from-slate-900 to-slate-900/40", border: "border-slate-800/60", badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20", history: [50], captainImg: "captain_H.jpg", goodsImg: "goods_H.jpg", flagImg: "flag_H.png", routeImg: "route_H.jpg" }
@@ -1988,6 +2006,11 @@
         // STOCK TRANSACTION CONTROL (1주 단위 매수/매도, 평단가 추적)
         // ----------------------------------------------------
         function buyShares(shipId, qty) {
+            // 도덕 제재로 매수 불가 선박 체크
+            if (window._blockedShips && window._blockedShips.has(shipId)) {
+                showCustomAlert(`⚠️ [왕실 제재] ${ships[shipId].name}은(는) 이번 라운드 도덕 점수 패널티로 매수 불가입니다!`);
+                return;
+            }
             // 시세 조작 효과 처리
             qty = Math.max(1, parseInt(qty) || 1);
             const currentPrice = calculateSharePrice(ships[shipId]);
@@ -2003,8 +2026,21 @@
             if (qty <= 0) return;
 
             if (ships[shipId].isUnethical) {
-                totalInvestedInUnethical += currentPrice * qty;
-                hasUnethicalInvestedNow = true;
+                // 부정 조사 면제 효과 체크
+                const immEff = drawnEffects.find(e => e.type === 'immunity' && e._used && !e._expired);
+                if (immEff) {
+                    immEff._expired = true;
+                    renderDrawnEffects();
+                    showCustomAlert('🗝️ [부정 조사 면제] 비윤리 선박 투자 패널티 면제!');
+                } else {
+                    totalInvestedInUnethical += currentPrice * qty;
+                    hasUnethicalInvestedNow = true;
+                    ethicalScore -= 1;
+                }
+            }
+            // 해적선(드레이크) 매수 시 도덕 점수 소폭 감소 (노예선보다 적게)
+            if (ships[shipId].isPirate) {
+                ethicalScore -= 0.5;
             }
 
             // qty주 매수 처리
@@ -2356,10 +2392,37 @@
                     || (activeKeyEffect && activeKeyEffect.type === 'market_fix');
 
                 if (!isMarketFrozen) {
-                    // 정세 변화 적용 (impact)
                     sit.impact(ships);
-                    // 글로벌 변동
                     applyGlobalMarketFluctuations(null, sitIndex);
+
+                    // 도덕 점수에 따른 전 선박 주가 보정
+                    const score = Math.floor(ethicalScore);
+                    let morDelta = 0;
+                    if (score <= -10)     morDelta = -5;
+                    else if (score <= -5) morDelta = -3;
+                    else if (score >= 10) morDelta = +3;
+                    else if (score >= 5)  morDelta = +2;
+
+                    if (morDelta !== 0) {
+                        for (const sid in ships) {
+                            if (ships[sid]._ruined) continue;
+                            ships[sid].currentProb = Math.max(0, Math.min(95, ships[sid].currentProb + morDelta));
+                        }
+                    }
+
+                    // 도덕 점수 -10 이하: 비윤리 제외 랜덤 1~2개 매수 불가
+                    if (score <= -10) {
+                        const ethical = Object.keys(ships).filter(id => !ships[id].isUnethical && !ships[id]._ruined);
+                        const shuffled = ethical.sort(() => Math.random() - 0.5);
+                        const count = Math.random() < 0.5 ? 1 : 2;
+                        window._blockedShips = new Set(shuffled.slice(0, count));
+                        if (window._blockedShips.size > 0) {
+                            const names = [...window._blockedShips].map(id => ships[id].name).join(', ');
+                            showCustomAlert(`⚠️ 도덕 점수 -10 이하! 왕실 제재로 [${names}] 이번 라운드 매수 불가!`);
+                        }
+                    } else {
+                        window._blockedShips = new Set();
+                    }
                 } else {
                     showCustomAlert('🗝️ [시장 동결] 이번 라운드 모든 주가 변동이 차단됩니다!');
                     // 동결 효과 소모
@@ -2660,9 +2723,12 @@
 
                 const unethicalOverlay = ''; // 노예선 배지는 선박명 옆 인라인으로 이동
                 const unethicalBadge = s.isUnethical
-                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded animate-pulse flex-shrink-0" style="background:rgba(136,19,55,0.85);color:#fda4af;border:1px solid rgba(244,63,94,0.4);">⚠️ 노예선</span>`
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(136,19,55,0.90);color:#fda4af;border:1px solid rgba(244,63,94,0.6);">⚠️ 노예선</span>`
                     : s.isPirate
-                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded animate-pulse flex-shrink-0" style="background:rgba(30,20,0,0.85);color:#fbbf24;border:1px solid rgba(245,158,11,0.5);">☠️ 해적선</span>`
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(30,20,0,0.90);color:#fbbf24;border:1px solid rgba(245,158,11,0.7);">☠️ 해적선</span>`
+                    : '';
+                const blockedBadge = (window._blockedShips && window._blockedShips.has(shipId))
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(55,55,55,0.90);color:#d1d5db;border:1px solid rgba(156,163,175,0.6);">🚫 매수불가</span>`
                     : '';
                 const ruinedOverlay = s._ruined
                     ? `<div class="absolute inset-0 bg-slate-950/80 flex items-center justify-center z-20 rounded-xl">
@@ -2677,7 +2743,7 @@
                 const trendGraphHTML = createTrendGraph(s.history);
 
                 const cardHTML = `
-                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} ${(!s._ruined && s.currentProb <= 20 && s.currentProb > 0) ? 'is-danger' : ''} ${isOwned ? '' : `bg-gradient-to-br ${s.bg}`} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;${isOwned ? 'background:#fde047;' : ''}">
+                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} ${(!s._ruined && s.currentProb <= 20 && s.currentProb > 0) ? 'is-danger' : ''} ${(window._blockedShips && window._blockedShips.has(shipId)) ? 'is-blocked' : ''} ${isOwned ? '' : `bg-gradient-to-br ${s.bg}`} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;${isOwned ? 'background:#fde047;' : ''}">
                         ${unethicalOverlay}
                         ${ruinedOverlay}
                         <div class="flex flex-col min-h-0">
@@ -2693,6 +2759,7 @@
                                     <div class="flex items-center gap-1 flex-wrap">
                                         <h4 class="font-bold text-[14px] leading-tight" style="color:#1a0f00;">${s.name}</h4>
                                         ${unethicalBadge}
+                                        ${blockedBadge}
                                     </div>
 
                                 </div>
@@ -2910,6 +2977,17 @@
                 unethicalBadge.className = "text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse";
             } else {
                 unethicalBadge.className = "text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400";
+            }
+            // 도덕 점수 버튼 색상 갱신
+            const moralBtn = document.getElementById('moral-score-btn');
+            const moralVal = document.getElementById('moral-score-val');
+            if (moralBtn && moralVal) {
+                const score = Math.floor(ethicalScore);
+                moralVal.textContent = score > 0 ? '+' + score : score;
+                if (score <= -10)     { moralBtn.style.cssText = 'font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;cursor:help;background:rgba(127,29,29,0.35);color:#f87171;border:1px solid rgba(239,68,68,0.5);'; }
+                else if (score <= -5) { moralBtn.style.cssText = 'font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;cursor:help;background:rgba(120,80,0,0.25);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);'; }
+                else if (score >= 5)  { moralBtn.style.cssText = 'font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;cursor:help;background:rgba(6,78,59,0.25);color:#34d399;border:1px solid rgba(52,211,153,0.4);'; }
+                else                  { moralBtn.style.cssText = 'font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px;cursor:help;background:rgba(44,26,4,0.2);color:#9e7a4a;border:1px solid rgba(139,90,43,0.35);'; }
             }
 
             // Adjust Next Round Button text
@@ -3130,7 +3208,17 @@
             document.getElementById('screen-voyage').classList.add('hidden');
             document.getElementById('screen-results').classList.remove('hidden');
 
-            const finalAssets = Math.round(cash + totalVoyagePayout);
+            const baseAssets = Math.round(cash + totalVoyagePayout);
+            // 도덕 점수에 따른 왕실 세금 차감
+            let taxRate = 0, taxDesc = '';
+            const scoreFloor = Math.floor(ethicalScore);
+            if (scoreFloor <= -10) { taxRate = 0.15; taxDesc = '왕실 중징계 세금 15%'; }
+            else if (scoreFloor <= -5) { taxRate = 0.05; taxDesc = '왕실 제재 세금 5%'; }
+            const taxAmount = Math.round(baseAssets * taxRate);
+            const finalAssets = baseAssets - taxAmount;
+            if (taxAmount > 0) {
+                showCustomAlert(`⚖️ [${taxDesc}] 도덕 점수 ${scoreFloor}점 패널티로 ${taxAmount.toLocaleString()} 레알이 차감됩니다!`);
+            }
 
             // Calculate Grade
             let grade = "C";
@@ -3893,6 +3981,7 @@
             window._pendingEventRound = null;
             currentForecastPool = [];
             keyUsedThisRound = false;
+            window._blockedShips = new Set();
             // 활성 효과 완전 초기화 (다른 아이디로 접속해도 초기화)
             activeKeyEffect = null;
             drawnEffects = [];
@@ -4137,6 +4226,46 @@
             }
         }
 
+        function showMoralTooltip() {
+            const tip = document.getElementById('moral-tooltip');
+            const btn = document.getElementById('moral-score-btn');
+            if (!tip || !btn) return;
+            const score = Math.floor(ethicalScore);
+            // 현재 상태
+            let statusColor = '#9e7a4a', statusText = '중립 — 패널티/보너스 없음';
+            if (score <= -10)     { statusColor = '#f87171'; statusText = '⚠️ 심각 — 전 선박 -5% + 랜덤 1~2척 매수불가 + 최종 세금 15%'; }
+            else if (score <= -5) { statusColor = '#fbbf24'; statusText = '⚠️ 경고 — 전 선박 -3% + 최종 세금 5%'; }
+            else if (score >= 10) { statusColor = '#34d399'; statusText = '✅ 청렴 — 전 선박 +3% 보너스'; }
+            else if (score >= 5)  { statusColor = '#34d399'; statusText = '✅ 선행 — 전 선박 +2% 보너스'; }
+            // 주가 영향
+            const delta = score <= -10 ? -5 : score <= -5 ? -3 : score >= 10 ? +3 : score >= 5 ? +2 : 0;
+            const deltaStr = delta > 0 ? `+${delta}%` : delta < 0 ? `${delta}%` : '없음';
+            // 최종 세금
+            const taxStr = score <= -10 ? '최종 자산의 15% 차감' : score <= -5 ? '최종 자산의 5% 차감' : '없음';
+            tip.innerHTML = `
+                <div style="font-weight:900;color:#c8960c;margin-bottom:6px;">⚖️ 도덕 점수: ${score}점</div>
+                <div style="color:${statusColor};margin-bottom:8px;font-weight:700;">${statusText}</div>
+                <div style="border-top:1px solid rgba(200,150,12,0.2);padding-top:6px;font-size:10px;">
+                    <div>라운드 주가 영향: <b style="color:${delta >= 0 ? '#34d399' : '#f87171'}">${deltaStr}</b></div>
+                    <div>최종 세금: <b style="color:${score <= -5 ? '#f87171' : '#9e7a4a'}">${taxStr}</b></div>
+                    <div style="margin-top:4px;color:#7a5c2e;">📊 점수 기준</div>
+                    <div style="color:#7a5c2e;">≥+10: +3% / ≥+5: +2% / ≤-5: -3%+세금5% / ≤-10: -5%+매수제한+세금15%</div>
+                </div>`;
+            tip.style.display = 'block';
+            const rect = btn.getBoundingClientRect();
+            let left = rect.left;
+            let top = rect.bottom + 6;
+            const tipW = 260;
+            if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+            if (top + 200 > window.innerHeight) top = rect.top - 210;
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+        function hideMoralTooltip() {
+            const tip = document.getElementById('moral-tooltip');
+            if (tip) tip.style.display = 'none';
+        }
+
         function showKeyTooltip() {
             const tip = document.getElementById('golden-key-tooltip');
             if (!tip) return;
@@ -4346,7 +4475,7 @@
                 showCustomAlert(`🗝️ [예언서] 예측 카드를 클릭하여 사용하며, 사용시 다음 라운드에 반드시 예측한 상황이 전개됩니다. 단, 돌발 상황이 발생할 수는 있습니다.`);
             } else if (eff.type === 'immunity') {
                 activeKeyEffect = eff;
-                showCustomAlert(`🗝️ [부정 조사 면제] 사용시 이번 라운드에 비윤리 선박에 투자해도 도덕지수 패널티가 면제됩니다.`);
+                showCustomAlert(`🗝️ [부정 조사 면제] 활성화! 블랙 에보니 호 매수 시 도덕지수 패널티가 1회 면제됩니다.`);
             }
             renderDrawnEffects();
         }
