@@ -860,7 +860,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(3.39v)
+                대항해 시대: 운명을 건 항해(3.40v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -2233,9 +2233,10 @@
         // STOCK TRANSACTION CONTROL (1주 단위 매수/매도, 평단가 추적)
         // ----------------------------------------------------
 
-        // 이번 라운드에서 각 선박별로 감점된 도덕 점수 추적
-        // 라운드 넘기면 초기화 → 그 다음부턴 매도해도 복원 안 됨
-        let _roundMoralDeduct = { E: 0, B: 0 }; // E: 노예선, B: 해적선
+        // 이번 라운드(국면)에서 각 선박별로 감점된 도덕 점수 및 그 감점이 걸린 주수 추적
+        // 라운드/국면 넘으면 초기화 → 그 이전에 사둔 주식은 팔아도 복원 안 됨
+        let _roundMoralDeduct = { E: 0, B: 0 }; // E: 노예선, B: 해적선 (이번 국면 감점 총액)
+        let _roundMoralDeductQty = { E: 0, B: 0 }; // 이번 국면에 감점이 걸린 보유 주수
 
         function buyShares(shipId, qty) {
             // 도덕 제재로 매수 불가 선박 체크
@@ -2262,6 +2263,7 @@
                     const deduct = qty * 1; // 1주당 -1점
                     ethicalScore -= deduct;
                     _roundMoralDeduct[shipId] = (_roundMoralDeduct[shipId] || 0) + deduct;
+                    _roundMoralDeductQty[shipId] = (_roundMoralDeductQty[shipId] || 0) + qty;
                     totalInvestedInUnethical += currentPrice * qty;
                     hasUnethicalInvestedNow = true;
                 }
@@ -2271,6 +2273,7 @@
                     const deduct = qty * 0.25; // 1주당 -0.25점
                     ethicalScore -= deduct;
                     _roundMoralDeduct[shipId] = (_roundMoralDeduct[shipId] || 0) + deduct;
+                    _roundMoralDeductQty[shipId] = (_roundMoralDeductQty[shipId] || 0) + qty;
                 }
             }
 
@@ -2304,15 +2307,17 @@
             const currentPrice = calculateSharePrice(ships[shipId]);
             const costPerShare = avgCost[shipId];
 
-            // 이번 라운드에 감점된 점수 중 "판 주수 비율"만큼 복원
+            // 이번 국면(라운드/돌발막간극)에서 신규 매수해 감점이 걸린 주수만큼만 비례 복원
+            // 그 이전부터 보유하던 주식은 팔아도 회복되지 않음
             if (ships[shipId].isUnethical || ships[shipId].isPirate) {
+                const trackedQty = Math.min(_roundMoralDeductQty[shipId] || 0, portfolio[shipId]);
                 const roundDeduct = _roundMoralDeduct[shipId] || 0;
-                if (roundDeduct > 0) {
-                    // 현재 보유량 대비 매도 비율로 이번 라운드 감점분 비례 복원
-                    const restoreRatio = qty / portfolio[shipId];
-                    const restore = roundDeduct * restoreRatio;
+                if (trackedQty > 0 && roundDeduct > 0) {
+                    const restoreQty = Math.min(qty, trackedQty);
+                    const restore = roundDeduct * (restoreQty / trackedQty);
                     ethicalScore += restore;
                     _roundMoralDeduct[shipId] = roundDeduct - restore;
+                    _roundMoralDeductQty[shipId] = trackedQty - restoreQty;
                 }
             }
 
@@ -2326,6 +2331,7 @@
                 totalCostBasis[shipId] = 0;
                 avgCost[shipId] = 0;
                 _roundMoralDeduct[shipId] = 0; // 전량 매도 → 추적 초기화
+                _roundMoralDeductQty[shipId] = 0;
                 if (ships[shipId].isUnethical) {
                     hasUnethicalInvestedNow = false;
                 }
@@ -2341,11 +2347,13 @@
             const totalSellAmount = portfolio[shipId] * currentPrice;
             cash += totalSellAmount;
 
-            // 이번 라운드 감점분 전액 복원
+            // 이번 국면(라운드/돌발막간극)에서 신규 매수해 걸린 감점분 전액 복원
+            // 그 이전부터 보유하던 분량의 감점은 이미 추적이 끊겨 있어 복원되지 않음
             const roundDeduct = _roundMoralDeduct[shipId] || 0;
             if (roundDeduct > 0) {
                 ethicalScore += roundDeduct;
                 _roundMoralDeduct[shipId] = 0;
+                _roundMoralDeductQty[shipId] = 0;
             }
 
             portfolio[shipId] = 0;
@@ -2367,11 +2375,12 @@
                 if (portfolio[shipId] > 0) {
                     const currentPrice = calculateSharePrice(ships[shipId]);
                     totalSold += portfolio[shipId] * currentPrice;
-                    // 이번 라운드 감점분 복원
+                    // 이번 국면에서 신규 매수해 걸린 감점분만 복원
                     const roundDeduct = _roundMoralDeduct[shipId] || 0;
                     if (roundDeduct > 0) {
                         ethicalScore += roundDeduct;
                         _roundMoralDeduct[shipId] = 0;
+                        _roundMoralDeductQty[shipId] = 0;
                     }
                     portfolio[shipId] = 0;
                     totalCostBasis[shipId] = 0;
@@ -2534,6 +2543,7 @@
             window._immunityRoundActive = false;
             // 라운드 전환 시 이번 라운드 도덕 감점 추적 초기화 (확정 — 팔아도 복원 불가)
             _roundMoralDeduct = { E: 0, B: 0 };
+            _roundMoralDeductQty = { E: 0, B: 0 };
             // 라운드 전환 시 예언서·시장동결 외 일회성 소모 효과 정리
             drawnEffects = drawnEffects.filter(e => !e._used || e.type === 'prophecy' || e.type === 'market_fix');
             // activeKeyEffect: market_fix/prophecy는 라운드 넘어도 유지, 나머지만 재탐색
@@ -4350,6 +4360,7 @@
             window._blockedShips = new Set();
             papalDonationCount = 0;
             _roundMoralDeduct = { E: 0, B: 0 };
+            _roundMoralDeductQty = { E: 0, B: 0 };
             window._immunityRoundActive = false;
             // 활성 효과 완전 초기화 (다른 아이디로 접속해도 초기화)
             activeKeyEffect = null;
@@ -4989,6 +5000,7 @@
                         ethicalScore += _roundMoralDeduct[sid];
                         refundTotal += _roundMoralDeduct[sid];
                         _roundMoralDeduct[sid] = 0;
+                        _roundMoralDeductQty[sid] = 0;
                     }
                 }
                 updateUI();
