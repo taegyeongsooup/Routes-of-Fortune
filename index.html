@@ -4772,7 +4772,7 @@
                     <div>최종 세금: <b style="color:${scoreFloor <= -5 ? '#f87171' : '#9e7a4a'}">${taxStr}</b></div>
                     <div style="margin-top:4px;color:#7a5c2e;">📊 점수 기준</div>
                     <div style="color:#7a5c2e;">≥+10: +3% / ≥+5: +2% / ≤-5: -3%+세금5% / ≤-10: -5%+매수제한+세금15%</div>
-                    <div style="margin-top:4px;color:#9e7a4a;">💡 노예선 -1점 / 해적선 -0.25점 / 매도 시 회복</div>
+                    <div style="margin-top:4px;color:#9e7a4a;">💡 노예선 투자 1주당 -1점 / 해적선 투자 1주당 -0.25점 </div>
                 </div>`;
             tip.style.display = 'block';
             const rect = btn.getBoundingClientRect();
@@ -4838,9 +4838,9 @@
                 document.body.appendChild(_shipTypeTipEl);
             }
             if (type === 'slave') {
-                _shipTypeTipEl.innerHTML = '<div style="font-weight:900;color:#f87171;margin-bottom:5px;">⚠️ 노예선</div>아프리카에서 노예를 수송하여 거래하는 비인도적인 상선입니다. 투자의 이익은 크지만, 도덕 점수에 <b style="color:#fbbf24;">-1점</b>만큼 악영향을 줍니다. 매도하면 도덕 점수가 부분 회복됩니다.';
+                _shipTypeTipEl.innerHTML = '<div style="font-weight:900;color:#f87171;margin-bottom:5px;">⚠️ 노예선</div>아프리카에서 노예를 수송하여 거래하는 비인도적인 상선입니다. 투자의 이익은 크지만, 도덕 점수에 <b style="color:#fbbf24;">-1점</b>만큼 악영향을 줍니다.';
             } else {
-                _shipTypeTipEl.innerHTML = '<div style="font-weight:900;color:#fbbf24;margin-bottom:5px;">☠️ 해적선</div>국가의 허가를 받고 해적질을 하는 사략 해적선입니다. 투자가 이익이 될 확률이 다소 높지만, 도덕 점수에 <b style="color:#fbbf24;">-0.25점</b>만큼 악영향을 줍니다. 매도하면 도덕 점수가 부분 회복됩니다.';
+                _shipTypeTipEl.innerHTML = '<div style="font-weight:900;color:#fbbf24;margin-bottom:5px;">☠️ 해적선</div>국가의 허가를 받고 해적질을 하는 사략 해적선입니다. 투자가 이익이 될 확률이 다소 높지만, 도덕 점수에 <b style="color:#fbbf24;">-0.25점</b>만큼 악영향을 줍니다.';
             }
             _shipTypeTipEl.style.display = 'block';
             let x = e.clientX + 12, y = e.clientY + 12;
