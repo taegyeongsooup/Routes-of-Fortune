@@ -680,7 +680,7 @@
                                 ontouchstart="unlockAudio();"
                                 ontouchmove="(function(e){e.preventDefault();e.stopPropagation();var t=e.touches[0];var el=document.getElementById('bgm-slider');var rect=el.getBoundingClientRect();var pct=Math.min(1,Math.max(0,(t.clientX-rect.left)/rect.width));var val=Math.round(pct*100);el.value=val;setBGMVolume(pct);document.getElementById('bgm-val').textContent=val+'%';})(event)"
                                 ontouchend="saveVolumeSettings()"
-                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;-webkit-appearance:none;">
+                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;">
                             <span id="bgm-val" style="font-size:10px;color:#7a5c2e;">40%</span>
                         </div>
                         <div>
@@ -690,7 +690,7 @@
                                 ontouchstart="unlockAudio();"
                                 ontouchmove="(function(e){e.preventDefault();e.stopPropagation();var t=e.touches[0];var el=document.getElementById('sfx-slider');var rect=el.getBoundingClientRect();var pct=Math.min(1,Math.max(0,(t.clientX-rect.left)/rect.width));var val=Math.round(pct*100);el.value=val;sfxVolume=pct;document.getElementById('sfx-val').textContent=val+'%';})(event)"
                                 ontouchend="saveVolumeSettings()"
-                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;-webkit-appearance:none;">
+                                style="width:100%;accent-color:#c8960c;cursor:pointer;touch-action:none;">
                             <span id="sfx-val" style="font-size:10px;color:#7a5c2e;">70%</span>
                         </div>
                     </div>
@@ -718,7 +718,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(3.03v)
+                대항해 시대: 운명을 건 항해(3.04v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -1886,31 +1886,18 @@
         // 시트에서 플레이어 데이터 가져와 localStorage에 병합 + 정확한 레벨 캐싱
         async function syncPlayerDataFromSheet(cls, num, name) {
             if (!SHEET_WEBHOOK_URL) {
+                // 오프라인: 로컬로 레벨 계산
                 _calcAndCachePlayerLevel(cls, num, name);
                 return;
             }
             try {
-                // hof 전체 데이터에서 내 stats 직접 추출 (명예의전당과 완전 동일한 방식)
-                const hofRes = await fetch(`${SHEET_WEBHOOK_URL}?action=hof&t=${Date.now()}`);
-                const hofRecords = await hofRes.json();
+                const res = await fetch(`${SHEET_WEBHOOK_URL}?action=mytitles&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}`);
+                const data = await res.json();
 
-                let sheetPlayCount = 0, sheetAssetsSum = 0;
-                const sheetTitleSet = new Set();
+                const sheetTitles   = Array.isArray(data.titles) ? data.titles.filter(Boolean) : [];
+                const sheetPlayCount = Number(data.playCount    || 0);
+                const sheetAssetsSum = Number(data.totalAssetsSum || 0);
 
-                if (Array.isArray(hofRecords)) {
-                    hofRecords.forEach(r => {
-                        const rName = (r.playerName || r.name || '').trim();
-                        const rCls  = (r.playerClass || r.cls || '').trim();
-                        if (rName !== name) return;
-                        if (cls && rCls && rCls !== cls) return;
-                        sheetPlayCount++;
-                        sheetAssetsSum += Number(r.finalAssets || 0);
-                        const titles = Array.isArray(r.titles) ? r.titles : [];
-                        titles.forEach(t => { if (t) sheetTitleSet.add(t); });
-                    });
-                }
-
-                // 로컬 데이터 로드
                 const titleKey = `aov_titles_${cls}_${num}_${name}`;
                 const statKey  = `aov_stats_${cls}_${num}_${name}`;
                 let localTitles = [];
@@ -1920,7 +1907,7 @@
 
                 // 칭호 병합
                 const localTitleNames = new Set(localTitles.map(t => t.title || t));
-                sheetTitleSet.forEach(t => {
+                sheetTitles.forEach(t => {
                     if (t && !localTitleNames.has(t)) {
                         localTitles.push({ title: t });
                         localTitleNames.add(t);
@@ -1928,21 +1915,21 @@
                 });
                 localStorage.setItem(titleKey, JSON.stringify(localTitles));
 
-                // stats 병합 (시트가 더 정확함)
-                const mergedPlayCount  = Math.max(sheetPlayCount,  localStats.playCount    || 0);
-                const mergedAssetsSum  = Math.max(sheetAssetsSum,  localStats.totalAssetsSum || 0);
-                localStats.playCount      = mergedPlayCount;
-                localStats.totalAssetsSum = mergedAssetsSum;
+                // stats 병합 (시트 > 로컬이면 시트값 사용)
+                if (sheetPlayCount  > (localStats.playCount    || 0)) localStats.playCount    = sheetPlayCount;
+                if (sheetAssetsSum  > (localStats.totalAssetsSum || 0)) localStats.totalAssetsSum = sheetAssetsSum;
                 localStorage.setItem(statKey, JSON.stringify(localStats));
 
-                // 레벨 계산 (명예의전당과 완전 동일)
+                // 시트 기반 정확한 레벨 계산 (명예의전당과 동일 방식)
                 const allTitleNames = Array.from(localTitleNames);
-                playerLevel = calcExpAndLevel(allTitleNames, mergedPlayCount, mergedAssetsSum).level;
+                playerLevel = calcExpAndLevel(allTitleNames, localStats.playCount, localStats.totalAssetsSum).level;
 
             } catch(e) {
+                // 네트워크 오류 시 로컬로 계산
                 _calcAndCachePlayerLevel(cls, num, name);
             }
 
+            // 황금열쇠도 시트에서 동기화
             await syncGoldenKeysFromSheet(cls, num, name);
         }
 
@@ -2649,7 +2636,7 @@
                 const trendGraphHTML = createTrendGraph(s.history);
 
                 const cardHTML = `
-                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} ${(!s._ruined && s.currentProb <= 10 && s.currentProb > 0) ? 'is-danger' : ''} ${isOwned ? '' : `bg-gradient-to-br ${s.bg}`} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;${isOwned ? 'background:#fde047;' : ''}">
+                    <div class="ship-card relative rounded-xl border ${s.border} ${isOwned ? 'is-owned' : ''} ${(!s._ruined && s.currentProb <= 20 && s.currentProb > 0) ? 'is-danger' : ''} ${isOwned ? '' : `bg-gradient-to-br ${s.bg}`} p-2 lg:p-2.5 flex flex-col justify-between overflow-hidden shadow-md" style="min-height:280px;${isOwned ? 'background:#fde047;' : ''}">
                         ${unethicalOverlay}
                         ${ruinedOverlay}
                         <div class="flex flex-col min-h-0">
@@ -3182,35 +3169,26 @@
                     stats = JSON.parse(localStorage.getItem(statKey) || '{}');
                 } catch(e) {}
 
-                // 시트 hof에서 내 stats 직접 추출 (명예의전당과 동일 방식)
+                // 시트에서 최신 stats 가져와 병합 (다른 기기 플레이 반영)
                 if (SHEET_WEBHOOK_URL) {
                     try {
-                        const hofRes = await fetch(`${SHEET_WEBHOOK_URL}?action=hof&t=${Date.now()}`);
-                        const hofRecords = await hofRes.json();
-                        let sheetPlayCount = 0, sheetAssetsSum = 0;
-                        const sheetTitleSet = new Set();
-                        if (Array.isArray(hofRecords)) {
-                            hofRecords.forEach(r => {
-                                const rName = (r.playerName || r.name || '').trim();
-                                const rCls  = (r.playerClass || r.cls || '').trim();
-                                if (rName !== playerName) return;
-                                if (playerClass && rCls && rCls !== playerClass) return;
-                                sheetPlayCount++;
-                                sheetAssetsSum += Number(r.finalAssets || 0);
-                                (Array.isArray(r.titles) ? r.titles : []).forEach(t => { if(t) sheetTitleSet.add(t); });
-                            });
-                        }
-                        if (sheetPlayCount  > (stats.playCount      || 0)) stats.playCount      = sheetPlayCount;
+                        const res = await fetch(`${SHEET_WEBHOOK_URL}?action=mytitles&cls=${encodeURIComponent(playerClass)}&num=${encodeURIComponent(playerNumber)}&name=${encodeURIComponent(playerName)}`);
+                        const data = await res.json();
+                        const sheetPlayCount  = Number(data.playCount  || 0);
+                        const sheetAssetsSum  = Number(data.totalAssetsSum || 0);
+                        // 시트값이 더 크면 병합
+                        if (sheetPlayCount  > (stats.playCount  || 0)) stats.playCount  = sheetPlayCount;
                         if (sheetAssetsSum  > (stats.totalAssetsSum || 0)) stats.totalAssetsSum = sheetAssetsSum;
-                        // 시트 칭호 병합
-                        const titleKey2 = `aov_titles_${playerClass}_${playerNumber}_${playerName}`;
-                        let localTitles2 = [];
-                        try { localTitles2 = JSON.parse(localStorage.getItem(titleKey2) || '[]'); } catch(e) {}
-                        const localTitleNames2 = new Set(localTitles2.map(t => t.title || t));
-                        sheetTitleSet.forEach(t => {
-                            if (t && !localTitleNames2.has(t)) { localTitles2.push({ title: t }); localTitleNames2.add(t); }
+                        // 시트 칭호도 로컬에 병합
+                        const sheetTitles = Array.isArray(data.titles) ? data.titles.filter(Boolean) : [];
+                        const titleKey = `aov_titles_${playerClass}_${playerNumber}_${playerName}`;
+                        let localTitles = [];
+                        try { localTitles = JSON.parse(localStorage.getItem(titleKey) || '[]'); } catch(e) {}
+                        const localTitleNames = new Set(localTitles.map(t => t.title || t));
+                        sheetTitles.forEach(t => {
+                            if (t && !localTitleNames.has(t)) { localTitles.push({ title: t }); localTitleNames.add(t); }
                         });
-                        localStorage.setItem(titleKey2, JSON.stringify(localTitles2));
+                        localStorage.setItem(titleKey, JSON.stringify(localTitles));
                     } catch(e) {}
                 }
 
@@ -3693,6 +3671,12 @@
             const rankingByAssets = allStudents.slice()
                 .sort((a, b) => b.maxAssets - a.maxAssets)
                 .slice(0, 10);
+            const rankingByTotal = allStudents.slice()
+                .sort((a, b) => b.totalAssetsSum - a.totalAssetsSum)
+                .slice(0, 10);
+            const rankingByTitles = allStudents.slice()
+                .sort((a, b) => b.count - a.count || b.level - a.level)
+                .slice(0, 10);
 
             const gradeColors = { SS:'#f59e0b', S:'#a78bfa', A:'#34d399', B:'#60a5fa', C:'#9ca3af' };
 
@@ -3704,7 +3688,8 @@
                 document.body.appendChild(tt);
             }
 
-            function buildHofRows(ranking) {
+            // rightVal: 탭별 우측 강조값
+            function buildHofRows(ranking, rightVal) {
                 return ranking.map(function(s, idx) {
                     const titlesArr = Array.isArray(s.titles) ? s.titles : [];
                     const recent3 = titlesArr.slice().sort(function(a,b){ return getTitleRarity(b)-getTitleRarity(a); }).slice(0,3);
@@ -3719,37 +3704,47 @@
                         return '<span class="hof-badge-hint" data-hofhint="' + hof_hint.replace(/"/g,'&quot;') + '" style="background:'+rl.color+'18;color:'+rl.color+';border:1px solid '+rl.color+'55;border-radius:4px;padding:1px 5px;font-size:9px;white-space:nowrap;display:inline-block;margin-bottom:2px;cursor:help;"><b>['+rl.label+']</b> '+t+'</span>';
                     }).join(' ');
                     const topRarity = titlesArr.length ? getTitleRarityLabel(getTitleRarity(titlesArr.slice().sort(function(a,b){return getTitleRarity(b)-getTitleRarity(a);})[0])) : {label:'C',color:'#9ca3af'};
+                    // 탭별 우측 강조값
+                    let rightHtml = '';
+                    if (rightVal === 'level')  rightHtml = `<span style="color:#f59e0b;font-weight:900;font-size:12px;">Lv.${s.level}</span>`;
+                    else if (rightVal === 'maxAssets') rightHtml = `<span style="color:#34d399;font-weight:900;font-size:12px;">${s.maxAssets.toLocaleString()}레알</span>`;
+                    else if (rightVal === 'total') rightHtml = `<span style="color:#60a5fa;font-weight:900;font-size:12px;">${s.totalAssetsSum.toLocaleString()}레알</span>`;
+                    else if (rightVal === 'titles') rightHtml = `<span style="color:#a78bfa;font-weight:900;font-size:12px;">${s.count}개</span>`;
                     return '<div class="rounded-lg px-2.5 py-1.5 mb-1" style="background:rgba(255,255,255,0.30);border:1px solid rgba(139,90,43,0.25);">'
                       + '<div class="flex items-center justify-between mb-0.5">'
                       + '<span class="text-[12px] font-bold flex items-center gap-1.5" style="color:#2c1a04;"><span class="w-5 text-center">'+medal+'</span>'
                       + (s.cls||s.playerClass)+'반 '+(s.name||s.playerName)+'</span>'
-                      + '<span class="hof-title-hover" style="color:'+gradeColor+';font-size:11px;font-weight:900;cursor:help;position:relative;">'
-                      + s.count+'개 칭호 ▾<span class="hof-tooltip">'+allTitlesStr+'</span></span>'
+                      + rightHtml
                       + '</div>'
                       + '<div style="padding-left:20px;">'
                       + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">'
                       + '<span style="background:'+topRarity.color+'22;color:'+topRarity.color+';border:1px solid '+topRarity.color+'55;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:900;">최고 ['+topRarity.label+']</span>'
-                      + '<span style="background:rgba(44,26,4,0.15);color:#5c3d11;border:1px solid rgba(92,61,17,0.3);border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;">Lv.'+s.level+' ('+s.exp+'exp)</span>'
-                      + '<span style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.3);border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;">최고자산 '+s.maxAssets.toLocaleString()+'레알</span>'
+                      + '<span style="background:rgba(44,26,4,0.15);color:#5c3d11;border:1px solid rgba(92,61,17,0.3);border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;">Lv.'+s.level+'</span>'
+                      + '<span class="hof-title-hover" style="color:'+gradeColor+';font-size:10px;font-weight:700;cursor:help;position:relative;">'
+                      + s.count+'칭호 ▾<span class="hof-tooltip">'+allTitlesStr+'</span></span>'
                       + '</div>'
-                      + '<div style="background:rgba(200,150,12,0.15);border-radius:4px;height:4px;width:100%;overflow:hidden;margin-bottom:4px;">'
+                      + '<div style="background:rgba(200,150,12,0.15);border-radius:4px;height:3px;width:100%;overflow:hidden;margin-bottom:4px;">'
                       + '<div style="background:linear-gradient(90deg,#c8960c,#f59e0b);height:100%;width:'+s.pct+'%;border-radius:4px;"></div></div>'
                       + badgesHtml
                       + '</div></div>';
                 }).join('');
             }
 
-            // 2탭 UI
-            const TAB_STYLE_ON  = 'font-size:11px;font-weight:900;padding:4px 12px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid rgba(200,150,12,0.5);border-bottom:none;background:rgba(200,150,12,0.2);color:#c8960c;';
-            const TAB_STYLE_OFF = 'font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid transparent;background:transparent;color:#7a5c2e;';
+            // 4탭 UI
+            const TAB_ON  = 'flex:1;font-size:10px;font-weight:900;padding:5px 4px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid rgba(200,150,12,0.5);border-bottom:none;background:rgba(200,150,12,0.2);color:#c8960c;text-align:center;';
+            const TAB_OFF = 'flex:1;font-size:10px;font-weight:700;padding:5px 4px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid transparent;background:transparent;color:#7a5c2e;text-align:center;';
             listEl.innerHTML = `
-              <div style="display:flex;gap:4px;margin-bottom:-1px;">
-                <button id="hof-tab-lv" style="${TAB_STYLE_ON}" onclick="switchHofTab('lv')">🏆 레벨 랭킹</button>
-                <button id="hof-tab-asset" style="${TAB_STYLE_OFF}" onclick="switchHofTab('asset')">💰 최고 자산 랭킹</button>
+              <div style="display:flex;gap:2px;margin-bottom:-1px;">
+                <button id="hof-tab-lv"     style="${TAB_ON}"  onclick="switchHofTab('lv')">🏆 레벨</button>
+                <button id="hof-tab-asset"  style="${TAB_OFF}" onclick="switchHofTab('asset')">💰 최고자산</button>
+                <button id="hof-tab-total"  style="${TAB_OFF}" onclick="switchHofTab('total')">📈 누적자본</button>
+                <button id="hof-tab-titles" style="${TAB_OFF}" onclick="switchHofTab('titles')">🎖️ 칭호</button>
               </div>
               <div style="border:1px solid rgba(200,150,12,0.3);border-radius:0 8px 8px 8px;padding:8px 4px 4px;">
-                <div id="hof-panel-lv">${buildHofRows(rankingByLevel)}</div>
-                <div id="hof-panel-asset" style="display:none;">${buildHofRows(rankingByAssets)}</div>
+                <div id="hof-panel-lv">${buildHofRows(rankingByLevel,'level')}</div>
+                <div id="hof-panel-asset"  style="display:none;">${buildHofRows(rankingByAssets,'maxAssets')}</div>
+                <div id="hof-panel-total"  style="display:none;">${buildHofRows(rankingByTotal,'total')}</div>
+                <div id="hof-panel-titles" style="display:none;">${buildHofRows(rankingByTitles,'titles')}</div>
               </div>`;
 
             listEl.addEventListener('mousemove', function(e) {
@@ -3771,12 +3766,14 @@
         }
 
         function switchHofTab(tab) {
-            const TAB_ON  = 'font-size:11px;font-weight:900;padding:4px 12px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid rgba(200,150,12,0.5);border-bottom:none;background:rgba(200,150,12,0.2);color:#c8960c;';
-            const TAB_OFF = 'font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid transparent;background:transparent;color:#7a5c2e;';
-            document.getElementById('hof-tab-lv').style.cssText    = tab === 'lv'    ? TAB_ON : TAB_OFF;
-            document.getElementById('hof-tab-asset').style.cssText = tab === 'asset' ? TAB_ON : TAB_OFF;
-            document.getElementById('hof-panel-lv').style.display    = tab === 'lv'    ? '' : 'none';
-            document.getElementById('hof-panel-asset').style.display = tab === 'asset' ? '' : 'none';
+            const ON  = 'flex:1;font-size:10px;font-weight:900;padding:5px 4px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid rgba(200,150,12,0.5);border-bottom:none;background:rgba(200,150,12,0.2);color:#c8960c;text-align:center;';
+            const OFF = 'flex:1;font-size:10px;font-weight:700;padding:5px 4px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid transparent;background:transparent;color:#7a5c2e;text-align:center;';
+            ['lv','asset','total','titles'].forEach(t => {
+                const btn = document.getElementById('hof-tab-'+t);
+                const panel = document.getElementById('hof-panel-'+t);
+                if (btn)   btn.style.cssText   = t === tab ? ON  : OFF;
+                if (panel) panel.style.display  = t === tab ? ''  : 'none';
+            });
         }
 
         // ----------------------------------------------------
@@ -3889,8 +3886,16 @@
         function toggleVolumePanel() {
             const panel = document.getElementById('volume-panel');
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-            // 패널 외부 클릭 시 닫기
             if (panel.style.display === 'block') {
+                // 패널 열 때 슬라이더 현재 볼륨값으로 동기화
+                const bgmSlider = document.getElementById('bgm-slider');
+                const sfxSlider = document.getElementById('sfx-slider');
+                const bgmVal    = document.getElementById('bgm-val');
+                const sfxVal    = document.getElementById('sfx-val');
+                if (bgmSlider) bgmSlider.value = Math.round(bgmVolume * 100);
+                if (sfxSlider) sfxSlider.value = Math.round(sfxVolume * 100);
+                if (bgmVal)    bgmVal.textContent = Math.round(bgmVolume * 100) + '%';
+                if (sfxVal)    sfxVal.textContent = Math.round(sfxVolume * 100) + '%';
                 setTimeout(() => {
                     document.addEventListener('click', function closePanelOnOutside(e) {
                         if (!document.getElementById('volume-panel').contains(e.target) &&
