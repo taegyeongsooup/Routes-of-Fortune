@@ -309,7 +309,46 @@
         /* 명예의전당 */
         #hall-of-fame-list .bg-slate-900\/60 { background: rgba(28,12,2,0.65) !important; }
 
-        /* ============ 모바일 가로모드: PC 레이아웃과 동일하게 ============ */
+        /* ============ 강제 가로모드 (transform rotate) ============ */
+        /* 폰을 돌리지 않고 버튼으로 화면을 90도 회전 */
+        body.force-landscape #scale-root {
+            transform-origin: top left;
+            position: fixed !important;
+            top: 0; left: 0;
+        }
+
+        /* ============ 모바일 가로모드: JS 클래스 제어 방식 ============ */
+        /* .is-landscape 클래스를 JS가 body에 붙이면 PC 레이아웃 적용 */
+        @media (max-width: 1023px) {
+            body.is-landscape, body.is-landscape #scale-root {
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+            body.is-landscape #screen-game {
+                grid-template-columns: 4fr 8fr !important;
+                display: grid !important;
+                height: calc(100vh - 65px) !important;
+                overflow: hidden !important;
+            }
+            body.is-landscape #left-panel  { height: 100% !important; overflow-y: auto !important; }
+            body.is-landscape #right-panel { height: 100% !important; overflow: hidden !important; }
+            body.is-landscape #ships-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                grid-template-rows: repeat(2, 1fr) !important;
+                height: 100% !important;
+            }
+            body.is-landscape #ships-grid > div { height: 100% !important; }
+            body.is-landscape #screen-game.pb-24 { padding-bottom: 0 !important; }
+
+            /* 세로모드: 기존 스크롤 레이아웃 */
+            body:not(.is-landscape), body:not(.is-landscape) #scale-root {
+                height: auto !important;
+                overflow-y: auto !important;
+            }
+            body:not(.is-landscape) #screen-game { grid-template-columns: 1fr !important; }
+        }
+
+        /* CSS orientation도 병행 적용 (일반 브라우저 대응) */
         @media (max-width: 1023px) and (orientation: landscape) {
             body, #scale-root { height: 100vh !important; overflow: hidden !important; }
             #screen-game {
@@ -326,11 +365,8 @@
                 height: 100% !important;
             }
             #ships-grid > div { height: 100% !important; }
-            /* 가로모드에서는 하단 여백 제거 */
             #screen-game.pb-24 { padding-bottom: 0 !important; }
         }
-
-        /* 모바일 세로모드: 스크롤 레이아웃 (기존 유지) */
         @media (max-width: 1023px) and (orientation: portrait) {
             body, #scale-root { height: auto !important; overflow-y: auto !important; }
             #screen-game { grid-template-columns: 1fr !important; }
@@ -732,6 +768,12 @@
                     </button>
                     <div id="golden-key-tooltip" style="display:none;position:fixed;z-index:9998;background:linear-gradient(135deg,rgba(28,14,2,0.98),rgba(44,26,4,0.97));border:1px solid rgba(200,150,12,0.4);border-radius:10px;padding:12px 14px;box-shadow:0 8px 32px rgba(0,0,0,0.7);font-size:11px;color:#e8d5a3;max-height:80vh;overflow-y:auto;"></div>
                 </div>
+                <!-- 모바일 전용: 강제 가로모드 버튼 -->
+                <button id="rotate-btn" onclick="toggleForcedLandscape()"
+                    style="display:none;background:rgba(44,26,4,0.85);color:#c8960c;border:1px solid rgba(200,150,12,0.4);font-size:11px;"
+                    class="px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition shrink-0">
+                    <i class="fa-solid fa-rotate text-[10px]"></i> <span id="rotate-btn-label">가로모드</span>
+                </button>
                 <button onclick="quitGame()" style="background:rgba(127,29,29,0.75);color:#fca5a5;border:1px solid rgba(153,27,27,0.5);font-size:11px;" class="px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition shrink-0">
                     <i class="fa-solid fa-flag text-[10px]"></i> 게임 포기하기
                 </button>
@@ -787,7 +829,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(3.31v)
+                대항해 시대: 운명을 건 항해(3.33v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -2041,8 +2083,6 @@
             // syncPlayerDataFromSheet에서 이미 goldenKeys 동기화 완료
             // loadGoldenKeys()는 로컬만 읽어 덮어쓰므로 호출 안 함
             loadGrantedKeyLevels();
-            // 매판 황금열쇠 지급 (포기 후 재시작 포함 — 항상 게임 시작 시 지급)
-            checkAndGrantKeys(playerLevel);
             updateGoldenKeyUI();
 
             currentRound = 0;
@@ -4343,16 +4383,20 @@
             } catch(e) {}
         }
 
-        // 게임 종료 후 레벨에 따라 황금열쇠 매판 지급
+        // 게임 종료/포기 후 레벨에 따라 황금열쇠 매판 지급 (잔액 무관 고정 리셋)
         function checkAndGrantKeys(currentLevel) {
             const perPlay = getPerPlayKeys(currentLevel);
             if (perPlay > 0) {
-                goldenKeys += perPlay;
-                saveGoldenKeys(); // 로컬 + 시트 저장
+                goldenKeys = perPlay; // 누적 아닌 고정값으로 초기화
+                saveGoldenKeys();
                 updateGoldenKeyUI();
                 setTimeout(() => {
-                    showCustomAlert(`🗝️ 황금 열쇠 ${perPlay}개 지급! (Lv.${currentLevel} 보너스, 총 ${goldenKeys}개)`);
+                    showCustomAlert(`🗝️ 황금 열쇠 ${perPlay}개 지급! (Lv.${currentLevel} 보너스)`);
                 }, 800);
+            } else {
+                goldenKeys = 0;
+                saveGoldenKeys();
+                updateGoldenKeyUI();
             }
         }
 
@@ -5041,6 +5085,8 @@
                     });
                 } catch(e) {}
             }
+            // 포기 시에도 매판 황금열쇠 지급 (결과화면을 안 거치므로 여기서 처리)
+            checkAndGrantKeys(playerLevel);
             resetGame();
         }
 
@@ -5053,14 +5099,126 @@
         const DESIGN_W = 1536;
         const DESIGN_H = 800;
 
-        function applyGameScale() { /* scale 미사용 */ }
+        // ============================================================
+        // 강제 가로모드 — transform rotate 방식 (카톡 인앱 100% 호환)
+        // 폰을 돌리지 않고 버튼 하나로 화면 전체를 90도 회전
+        // ============================================================
+        let _forcedLandscape = false;
 
-        window.addEventListener('resize', applyGameScale);
+        function applyForcedLandscape() {
+            const root = document.getElementById('scale-root');
+            if (!root) return;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            if (_forcedLandscape) {
+                // 세로 화면을 가로처럼: 90도 회전 + width/height swap
+                root.style.width  = vh + 'px';
+                root.style.height = vw + 'px';
+                root.style.transform = `rotate(90deg) translateY(-${vw}px)`;
+                root.style.transformOrigin = 'top left';
+                root.style.position = 'fixed';
+                root.style.top = '0';
+                root.style.left = '0';
+                root.style.overflowY = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.body.style.height = vh + 'px';
+                document.body.classList.add('is-landscape', 'force-landscape');
+                const lbl = document.getElementById('rotate-btn-label');
+                if (lbl) lbl.textContent = '세로모드';
+            } else {
+                // 원래대로 복원
+                root.style.width  = '';
+                root.style.height = '';
+                root.style.transform = '';
+                root.style.transformOrigin = '';
+                root.style.position = '';
+                root.style.top = '';
+                root.style.left = '';
+                root.style.overflowY = '';
+                document.body.style.overflow = '';
+                document.body.style.height = '';
+                document.body.classList.remove('is-landscape', 'force-landscape');
+                const lbl = document.getElementById('rotate-btn-label');
+                if (lbl) lbl.textContent = '가로모드';
+            }
+        }
+
+        function toggleForcedLandscape() {
+            _forcedLandscape = !_forcedLandscape;
+            applyForcedLandscape();
+        }
+
+        // 모바일 여부 판단해서 버튼 표시
+        function updateRotateBtn() {
+            const btn = document.getElementById('rotate-btn');
+            if (!btn) return;
+            // 터치 기기 + 폭 1023px 이하인 경우만 버튼 표시
+            const isMobileSize = window.innerWidth <= 1023 || window.innerHeight <= 1023;
+            const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+            btn.style.display = (isMobileSize && isTouch) ? 'flex' : 'none';
+        }
+
+        // ============================================================
+        // 모바일 방향 감지 — JS 클래스 제어 방식
+        // 카톡 인앱 브라우저 대응: orientationchange + resize 이중 감지
+        // ============================================================
+        function applyOrientationClass() {
+            if (_forcedLandscape) return; // 강제 가로모드 중엔 자동 감지 스킵
+            const isMobile = window.innerWidth < 1024 || window.innerHeight < 1024;
+            if (!isMobile) {
+                document.body.classList.remove('is-landscape');
+                return;
+            }
+            let isLandscape = window.innerWidth > window.innerHeight;
+            if (window.screen && window.screen.orientation && window.screen.orientation.type) {
+                isLandscape = window.screen.orientation.type.includes('landscape');
+            }
+            if (isLandscape) {
+                document.body.classList.add('is-landscape');
+            } else {
+                document.body.classList.remove('is-landscape');
+            }
+        }
+
+        function applyGameScale() {
+            applyOrientationClass();
+            updateRotateBtn();
+            if (_forcedLandscape) applyForcedLandscape(); // 리사이즈 시 재계산
+        }
+
+        window.addEventListener('resize', function() {
+            applyOrientationClass();
+            updateRotateBtn();
+            if (_forcedLandscape) applyForcedLandscape();
+            setTimeout(function() {
+                applyOrientationClass();
+                if (_forcedLandscape) applyForcedLandscape();
+            }, 300);
+        });
+
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                applyOrientationClass();
+                updateRotateBtn();
+                if (_forcedLandscape) applyForcedLandscape();
+            }, 400);
+        });
+
+        if (window.screen && window.screen.orientation) {
+            window.screen.orientation.addEventListener('change', function() {
+                setTimeout(function() {
+                    applyOrientationClass();
+                    if (_forcedLandscape) applyForcedLandscape();
+                }, 200);
+            });
+        }
 
         window.onload = function() {
             updateUI();
             loadHallOfFame();
             applyGameScale();
+            updateRotateBtn();
             // 최초 로딩: 로비 화면이므로 헤더 숨기기
             document.getElementById('main-header').style.display = 'none';
         }
