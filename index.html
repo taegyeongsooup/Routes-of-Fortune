@@ -312,59 +312,96 @@
         /* 가로모드는 헤더 버튼으로 .game-landscape 클래스 토글로 처리 */
 
         /* 모바일 가로모드 게임 레이아웃 — body.game-landscape 클래스로 활성화 */
+        /* transform: scale() 방식: #scale-root를 PC 기준 해상도(1366x768)로 고정한 뒤
+           실제 화면 크기에 맞춰 비율을 유지하며 통째로 축소/확대 표시 → 사진3(PC)과 동일한 비율로 보임 */
         body.game-landscape {
             overflow: hidden !important;
             height: 100vh !important;
+            width: 100vw !important;
         }
         body.game-landscape #scale-root {
-            height: 100vh !important;
+            width: 1366px !important;
+            height: 768px !important;
+            min-height: 768px !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform-origin: center center !important;
             overflow: hidden !important;
+            font-size: 13px !important;
         }
         body.game-landscape #main-header {
-            height: 42px !important;
+            height: 65px !important;
             min-height: 0 !important;
-            padding: 4px 10px !important;
+            padding: 8px 16px !important;
             flex-wrap: nowrap !important;
-            gap: 4px !important;
+            gap: 8px !important;
         }
-        body.game-landscape #main-header .header-title { font-size: 10px !important; }
-        body.game-landscape #main-header p { display: none !important; }
-        body.game-landscape #main-header .rounded-lg { padding: 2px 6px !important; font-size: 9px !important; }
-        body.game-landscape #main-header button { padding: 2px 6px !important; font-size: 9px !important; }
-        body.game-landscape #player-info-badge { padding: 2px 6px !important; }
-        body.game-landscape #player-info-name { font-size: 10px !important; }
         body.game-landscape main {
             overflow: hidden !important;
-            height: calc(100vh - 42px) !important;
-            padding: 4px 8px !important;
-            gap: 4px !important;
+            height: calc(768px - 65px) !important;
+            padding: 12px !important;
+            gap: 12px !important;
         }
         body.game-landscape #screen-game {
             grid-template-columns: 4fr 8fr !important;
             display: grid !important;
             height: 100% !important;
             overflow: hidden !important;
-            gap: 4px !important;
+            gap: 12px !important;
         }
         body.game-landscape #left-panel {
             height: 100% !important;
             overflow-y: auto !important;
-            gap: 4px !important;
+            gap: 10px !important;
         }
-        body.game-landscape #left-panel > div { padding: 6px !important; }
         body.game-landscape #right-panel { height: 100% !important; overflow: hidden !important; }
         body.game-landscape #ships-grid {
             grid-template-columns: repeat(4, 1fr) !important;
             grid-template-rows: repeat(2, 1fr) !important;
             height: 100% !important;
-            gap: 4px !important;
+            gap: 10px !important;
         }
         body.game-landscape #ships-grid > div { height: 100% !important; }
         body.game-landscape #screen-game.pb-24 { padding-bottom: 0 !important; }
-        body.game-landscape .ship-card { padding: 4px !important; font-size: 10px !important; }
+
+        /* 가로모드: 수량 입력줄 + 매수/매도줄 세로폭 압축 (위아래 카드 침범 방지) */
+        body.game-landscape .ship-card { padding: 6px !important; }
+        body.game-landscape .ship-card [id^="qty-"] {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            height: 18px !important;
+            font-size: 10px !important;
+        }
+        body.game-landscape .ship-card .flex.items-center.gap-1.mb-1 {
+            margin-bottom: 2px !important;
+            gap: 3px !important;
+        }
+        body.game-landscape .ship-card .flex.items-center.gap-1.mb-1 button {
+            padding: 0 3px !important;
+            line-height: 1.5 !important;
+            height: 16px !important;
+            font-size: 8px !important;
+        }
+        body.game-landscape .ship-card .flex.items-center.gap-1.mb-1 span {
+            font-size: 9px !important;
+        }
+        body.game-landscape .ship-card .flex.gap-1.text-\[13px\] {
+            margin-top: 1px !important;
+        }
+        body.game-landscape .ship-card .flex.gap-1.text-\[13px\] button {
+            padding: 1px 3px !important;
+            min-height: 0 !important;
+            line-height: 1.3 !important;
+            height: 18px !important;
+            font-size: 9px !important;
+        }
+        body.game-landscape .ship-card svg { height: 26px !important; }
+        body.game-landscape .ship-card .w-7.h-7 { width: 20px !important; height: 20px !important; }
+        body.game-landscape .ship-card .w-8.h-8 { width: 22px !important; height: 22px !important; }
         body.game-landscape .ship-card h4 { font-size: 10px !important; }
-        body.game-landscape .ship-card svg { height: 28px !important; }
-        body.game-landscape .ship-card button { min-height: 0 !important; padding: 2px 4px !important; font-size: 9px !important; }
+        body.game-landscape .ship-card .mb-1\.5 { margin-bottom: 3px !important; }
+        body.game-landscape .ship-card .py-1 { padding-top: 2px !important; padding-bottom: 2px !important; }
 
         /* 전체 앱 */
         #app-root {
@@ -814,7 +851,7 @@
         </div>
 
         <!-- SCREEN 1: LOBBY / START SCREEN (메인 대기실 화면 최초 출력) -->
-        <section id="screen-lobby" class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center overflow-y-auto" style="max-height:100vh; padding: 8px 0;">
+        <section id="screen-lobby" class="w-full max-w-4xl lg:max-w-6xl mx-auto flex flex-col items-center justify-center text-center overflow-y-auto" style="max-height:100vh; padding: 8px 0;">
             <div class="relative mb-2 animate-float">
                 <div class="absolute -inset-1 rounded-full opacity-75 blur-xl" style="background: radial-gradient(circle, #c8960c, #8b4513);"></div>
                 <div class="relative bg-slate-950 p-5 rounded-full border border-slate-800">
@@ -823,7 +860,7 @@
             </div>
             
             <h2 class="header-title text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text mb-2 tracking-tight" style="background-image: linear-gradient(to bottom, #f4edd8, #c8960c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                대항해 시대: 운명을 건 항해(3.35v)
+                대항해 시대: 운명을 건 항해(3.39v)
             </h2>
             <p class="text-slate-300 max-w-2xl text-sm sm:text-base mb-3 leading-relaxed px-4">
                 16세기, 유럽의 야심 찬 선장들이 미지의 신대륙과 인도를 향해 닻을 올립니다.<br>
@@ -831,8 +868,11 @@
                 변동하는 상황 속에서 최대의 부를 창조하고 명예를 드높이시길 바랍니다!<br>
             </p>
 
+            <!-- 승선 명부 + 명예의 전당: PC는 좌우 배치, 모바일은 세로 스택 -->
+            <div class="w-full lg:grid lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-5 lg:items-start lg:max-w-5xl px-4" id="lobby-form-hof-wrap">
+
             <!-- Player Identity Form (반/번호/이름 입력) -->
-            <div class="w-full max-w-xl mb-3 px-4">
+            <div class="w-full max-w-xl mb-3 lg:max-w-none lg:mb-0 lg:w-full">
                 <div class="rounded-2xl p-4 sm:p-5 shadow-xl" style="background:linear-gradient(145deg,#f5edd6,#ede0c0); border:2px solid rgba(139,90,43,0.55); color:#1a0f00;">
                     <h3 class="font-bold text-sm mb-3 flex items-center justify-center gap-2" style="color:#7a4a1a;">
                         <i class="fa-solid fa-id-card"></i> 승선 명부 작성 (칭호 기록용 필수 입력)
@@ -856,16 +896,16 @@
                     </div>
                     <p id="player-form-error" class="hidden text-rose-400 text-[12px] font-bold mt-2"><i class="fa-solid fa-circle-exclamation"></i> 반, 이름, 비밀번호를 모두 입력해야 출항할 수 있습니다.</p>
                 </div>
+
+                <!-- 3단계 설명 제거됨 -->
+
+                <button onclick="startGame()" class="w-full mt-3 px-8 py-3 bg-gradient-to-r from-amber-700 via-yellow-700 to-amber-600 rounded-xl font-bold text-base text-amber-100 shadow-xl shadow-amber-900/30 hover:scale-105 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-ship"></i> 게임 시작 및 초기 투자하러 가기
+                </button>
             </div>
 
-            <!-- 3단계 설명 제거됨 -->
-
-            <button onclick="startGame()" class="px-8 py-3 bg-gradient-to-r from-amber-700 via-yellow-700 to-amber-600 rounded-xl font-bold text-base text-amber-100 shadow-xl shadow-amber-900/30 hover:scale-105 transition-all duration-300 active:scale-95 flex items-center gap-2 mb-3">
-                <i class="fa-solid fa-ship"></i> 게임 시작 및 초기 투자하러 가기
-            </button>
-
             <!-- 칭호 수집 명예의 전당 (Top 10) -->
-            <div class="w-full max-w-3xl px-4">
+            <div class="w-full max-w-3xl mt-3 lg:mt-0 lg:max-w-none lg:w-full">
                 <div class="rounded-2xl p-4" style="background:linear-gradient(145deg,#f5edd6,#ede0c0); border:1px solid rgba(139,90,43,0.45); overflow:visible; position:relative;">
                     <div class="flex items-center justify-between mb-2.5">
                         <h3 class="font-bold text-sm flex items-center gap-2" style="color:#2c1a04;">
@@ -885,7 +925,10 @@
                     </div>
                 </div>
             </div>
+
+            </div>
         </section>
+
 
         <!-- SCREEN 2: MAIN BOARD (격자형 콤팩트 고정 높이 뷰어) -->
         <section id="screen-game" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-3 items-start pb-24 lg:pb-0" style="min-height:0; flex:1;">
@@ -2622,8 +2665,8 @@
                     sit.impact(ships);
                     applyGlobalMarketFluctuations(null, sitIndex);
 
-                    // 도덕 점수에 따른 전 선박 주가 보정
-                    const score = Math.floor(ethicalScore);
+                    // 도덕 점수에 따른 전 선박 주가 보정 (표시되는 원점수 기준)
+                    const score = ethicalScore;
                     let morDelta = 0;
                     if (score <= -10)     morDelta = -5;
                     else if (score <= -5) morDelta = -3;
@@ -2973,9 +3016,9 @@
 
                 const unethicalOverlay = ''; // 노예선 배지는 선박명 옆 인라인으로 이동
                 const unethicalBadge = s.isUnethical
-                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(136,19,55,0.90);color:#fda4af;border:1px solid rgba(244,63,94,0.6);cursor:help;position:relative;" onmouseenter="showShipTypeTip(event,'slave',${JSON.stringify(s.icon)},${s.ethicalPenalty || -1})" onmouseleave="hideShipTypeTip()">⚠️ 노예선</span>`
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0 ship-type-badge" style="background:rgba(136,19,55,0.90);color:#fda4af;border:1px solid rgba(244,63,94,0.6);cursor:help;position:relative;" onmouseenter="showShipTypeTip(event,'slave')" onmouseleave="hideShipTypeTip()">⚠️ 노예선</span>`
                     : s.isPirate
-                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(30,20,0,0.90);color:#fbbf24;border:1px solid rgba(245,158,11,0.7);cursor:help;position:relative;" onmouseenter="showShipTypeTip(event,'pirate')" onmouseleave="hideShipTypeTip()">☠️ 해적선</span>`
+                    ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0 ship-type-badge" style="background:rgba(30,20,0,0.90);color:#fbbf24;border:1px solid rgba(245,158,11,0.7);cursor:help;position:relative;" onmouseenter="showShipTypeTip(event,'pirate')" onmouseleave="hideShipTypeTip()">☠️ 해적선</span>`
                     : '';
                 const blockedBadge = (window._blockedShips && window._blockedShips.has(shipId))
                     ? `<span class="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style="background:rgba(55,55,55,0.90);color:#d1d5db;border:1px solid rgba(156,163,175,0.6);">🚫 매수불가</span>`
@@ -3008,8 +3051,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-1 flex-wrap">
                                         <h4 class="font-bold text-[14px] leading-tight" style="color:#1a0f00;">${s.name}</h4>
-                                        ${unethicalBadge}
-                                        ${blockedBadge}
+                                        <span class="flex items-center gap-1 ml-auto flex-shrink-0">${unethicalBadge}${blockedBadge}</span>
                                     </div>
 
                                 </div>
@@ -3230,7 +3272,7 @@
             const moralVal = document.getElementById('moral-score-val');
             if (moralBtn && moralVal) {
                 const score = ethicalScore;
-                const scoreFloor = Math.floor(score);
+                const scoreFloor = score;
                 const displayScore = Number.isInteger(score) ? score : score.toFixed(2);
                 moralVal.textContent = score > 0 ? '+' + displayScore : displayScore;
                 if (scoreFloor <= -10)     { moralBtn.style.cssText = 'font-size:10px;font-weight:900;padding:3px 8px;border-radius:6px;cursor:help;background:#7f1d1d;color:#fca5a5;border:1.5px solid #ef4444;'; }
@@ -3459,15 +3501,16 @@
             document.getElementById('screen-results').classList.remove('hidden');
 
             const baseAssets = Math.round(cash + totalVoyagePayout);
-            // 도덕 점수에 따른 왕실 세금 차감
+            // 도덕 점수에 따른 왕실 세금 차감 (표시되는 원점수 기준)
             let taxRate = 0, taxDesc = '';
-            const scoreFloor = Math.floor(ethicalScore);
+            const scoreFloor = ethicalScore;
+            const scoreDisplay = Number.isInteger(scoreFloor) ? scoreFloor : scoreFloor.toFixed(2);
             if (scoreFloor <= -10) { taxRate = 0.15; taxDesc = '왕실 중징계 세금 15%'; }
             else if (scoreFloor <= -5) { taxRate = 0.05; taxDesc = '왕실 제재 세금 5%'; }
             const taxAmount = Math.round(baseAssets * taxRate);
             const finalAssets = baseAssets - taxAmount;
             if (taxAmount > 0) {
-                showCustomAlert(`⚖️ [${taxDesc}] 도덕 점수 ${scoreFloor}점 패널티로 ${taxAmount.toLocaleString()} 레알이 차감됩니다!`);
+                showCustomAlert(`⚖️ [${taxDesc}] 도덕 점수 ${scoreDisplay}점 패널티로 ${taxAmount.toLocaleString()} 레알이 차감됩니다!`);
             }
 
             // Calculate Grade
@@ -3498,13 +3541,36 @@
                 if (portfolio[shipId] > 0) distinctShipsInvested++;
             }
 
+            // 판수/누적자산 칭호 판정을 위해 stats를 먼저 갱신 (이번 판 포함)
+            const statKey = `aov_stats_${playerClass}_${playerNumber}_${playerName}`;
+            let stats = { playCount: 0, totalAssetsSum: 0 };
+            try { stats = JSON.parse(localStorage.getItem(statKey) || '{}'); } catch(e) {}
+            stats.playCount = (stats.playCount || 0) + 1;
+            stats.totalAssetsSum = (stats.totalAssetsSum || 0) + finalAssets;
+            localStorage.setItem(statKey, JSON.stringify(stats));
+
+            // 칭호개수 칭호 판정을 위해 기존 보유 칭호(중복 제거) 개수 파악
+            const myTitlesKeyEarly = `aov_titles_${playerClass}_${playerNumber}_${playerName}`;
+            let existingTitleNames = new Set();
+            try {
+                JSON.parse(localStorage.getItem(myTitlesKeyEarly) || '[]').forEach(t => {
+                    const title = t.title || t;
+                    if (title) existingTitleNames.add(title);
+                });
+            } catch(e) {}
+
             // 30가지 칭호 판정 (우선순위 높은 것부터 매칭되는 첫 칭호 채택)
-            const earnedTitles = determineTitles({ finalAssets, distinctShipsInvested });
+            const earnedTitles = determineTitles({
+                finalAssets, distinctShipsInvested,
+                playCount: stats.playCount,
+                totalCapitalSum: stats.totalAssetsSum,
+                existingTitleCount: existingTitleNames.size
+            });
             const earnedTitle = earnedTitles[0];
 
             const titlesContainer = document.getElementById('result-titles-container');
-            const tagLabels = { A:'자산', B:'업적', C:'선박', D:'매매', E:'도덕', F:'특별', Z:'' };
-            const tagColors = { A:'#b45309', B:'#0f766e', C:'#7c3aed', D:'#1d4ed8', E:'#15803d', F:'#9f1239', Z:'#6b7280' };
+            const tagLabels = { A:'자산', B:'업적', C:'선박', D:'매매', E:'도덕', F:'특별', G:'판수', H:'누적자본', I:'수집', Z:'' };
+            const tagColors = { A:'#b45309', B:'#0f766e', C:'#7c3aed', D:'#1d4ed8', E:'#15803d', F:'#9f1239', G:'#0369a1', H:'#854d0e', I:'#86198f', Z:'#6b7280' };
             titlesContainer.innerHTML = earnedTitles.map(function(t, i) {
                 const bgColor = i === 0 ? 'rgba(251,243,219,0.95)' : 'rgba(255,255,255,0.80)';
                 const borderColor = i === 0 ? 'rgba(200,150,12,0.60)' : 'rgba(139,90,43,0.25)';
@@ -3545,22 +3611,11 @@
             // 결과를 구글 스프레드시트로 제출 (칭호 수집 명부 기록)
             // 레벨 업 - 시트 stats 먼저 동기화 후 로컬과 합산해 정확한 레벨 계산
             {
-                const statKey = `aov_stats_${playerClass}_${playerNumber}_${playerName}`;
-                let stats = { playCount: 0, totalAssetsSum: 0 };
-                try {
-                    stats = JSON.parse(localStorage.getItem(statKey) || '{}');
-                } catch(e) {}
-
-                // 이번 판 추가
-                stats.playCount = (stats.playCount || 0) + 1;
-                stats.totalAssetsSum = (stats.totalAssetsSum || 0) + finalAssets;
-                localStorage.setItem(statKey, JSON.stringify(stats));
-
                 const myTitlesAll = [];
-                try { JSON.parse(localStorage.getItem(`aov_titles_${playerClass}_${playerNumber}_${playerName}`) || '[]').forEach(t => {
+                myTitles.forEach(t => {
                     const title = t.title || t;
                     if (title && !myTitlesAll.includes(title)) myTitlesAll.push(title);
-                }); } catch(e){}
+                });
 
                 // 로그인 시 이미 hof 기반으로 playerLevel 계산됨 → 그대로 사용
                 // 이번 판 exp 추가분만 반영
@@ -3582,7 +3637,7 @@
                 title: earnedTitle.title,
                 allTitles: earnedTitles.map(function(t){ return t.title; }).join(' / '),
                 titles: earnedTitles.map(function(t){ return t.title; }),
-                level: (function(){ const st=JSON.parse(localStorage.getItem(`aov_stats_${playerClass}_${playerNumber}_${playerName}`)||'{}'); const tl=JSON.parse(localStorage.getItem(`aov_titles_${playerClass}_${playerNumber}_${playerName}`)||'[]').map(t=>t.title||t).filter((v,i,a)=>a.indexOf(v)===i); return calcExpAndLevel(tl, st.playCount||1, st.totalAssetsSum||finalAssets).level; })(),
+                level: (function(){ const tl=myTitles.map(t=>t.title||t).filter((v,i,a)=>a.indexOf(v)===i); return calcExpAndLevel(tl, stats.playCount||1, stats.totalAssetsSum||finalAssets).level; })(),
                 cash: Math.round(cash), payout: Math.round(totalVoyagePayout),
                 distinctShipsInvested: distinctShipsInvested, ethicalScore: ethicalScore,
                 unethicalInvested: Math.round(totalInvestedInUnethical),
@@ -3596,7 +3651,7 @@
         // =============================================
         // 칭호 판정 - 여러 개 동시 획득 가능
         // =============================================
-        function determineTitles({ finalAssets, distinctShipsInvested }) {
+        function determineTitles({ finalAssets, distinctShipsInvested, playCount = 0, totalCapitalSum = 0, existingTitleCount = 0 }) {
             const D = ships.D, H = ships.H;
             const dVal = portfolio.D * calculateSharePrice(D);
             const hVal = portfolio.H * calculateSharePrice(H);
@@ -3608,25 +3663,22 @@
 
             const earned = []; // 획득한 칭호 전부 수집
 
-            // ---- [A] 자산 규모 칭호 (구간별 1개) ----
-            if      (finalAssets >= 50000) earned.push({ tag:"A", title:"바다의 신 포세이돈", desc:"5만 레알! 인류 역사에서 단 한 번도 기록된 적 없는 전설의 수치. 대서양, 인도양, 태평양은 물론 신들의 바다까지 지배한 불멸의 존재. 그대의 이름은 영원히 역사에 새겨질 것입니다." });
-            else if (finalAssets >= 30000) earned.push({ tag:"A", title:"대항해시대 바다의 황제", desc:"역사상 단 한 번도 달성된 적 없는 3만 레알의 경지. 대서양, 인도양, 태평양을 모두 손에 쥔 진정한 바다의 지배자입니다." });
-            else if (finalAssets >= 10000) earned.push({ tag:"A", title:"대항해시대의 조지 소로스", desc:"시장의 미세한 바람과 파동의 정점을 귀신같이 짚어내고 분산과 집중 투자를 혼용하여 동대륙 무역 역사를 홀로 새로 쓴 초인의 경지입니다." });
-            else if (finalAssets >= 8000)  earned.push({ tag:"A", title:"신항로의 살아있는 전설", desc:"8척의 선단을 손바닥 위에 올려놓고 움직인 듯, 거의 모든 항로에서 압도적인 성과를 거둔 대부호입니다." });
-            else if (finalAssets >= 7000)  earned.push({ tag:"A", title:"리스본 증권거래소의 제왕", desc:"포르투갈 왕실마저 자문을 구하는 압도적인 자산 규모를 쌓아올린 거상입니다." });
-            else if (finalAssets >= 6000)  earned.push({ tag:"A", title:"동인도 무역의 떠오르는 거성", desc:"탄탄한 안목으로 여러 항로에서 큰 수익을 연달아 거머쥔 신흥 자본가입니다." });
-            else if (finalAssets >= 5000)  earned.push({ tag:"A", title:"황금 나침반을 쥔 항해 투자자", desc:"위험과 기회를 정확히 가늠하는 직감으로 큰 성공을 거둔 노련한 투자자입니다." });
-            else if (finalAssets >= 4000)  earned.push({ tag:"A", title:"리스본 항구의 떠오르는 큰손", desc:"꾸준한 분석과 결단으로 시장의 흐름을 잘 탄 유망한 거상입니다." });
-            else if (finalAssets >= 3000)  earned.push({ tag:"A", title:"대서양 무역의 안정적 강자", desc:"큰 욕심 없이도 견실한 수익을 차곡차곡 쌓아 신뢰받는 투자자가 되었습니다." });
-            else if (finalAssets >= 2500)  earned.push({ tag:"A", title:"신항로 개척의 유망주", desc:"초기 투자금을 거의 두 배 가까이 불려낸 성장형 투자자입니다." });
-            else if (finalAssets >= 2000)  earned.push({ tag:"A", title:"포르투갈 왕실 인증 유능한 상인", desc:"안정적인 수익률로 왕실의 눈에 들 만큼 신뢰를 쌓은 상인입니다." });
-            else if (finalAssets >= 1700)  earned.push({ tag:"A", title:"성공적인 첫 항해를 마친 신참 거상", desc:"처음 도전한 투자임에도 합리적인 수익을 거둔 재능 있는 신참입니다." });
-            else if (finalAssets >= 1400)  earned.push({ tag:"A", title:"잔잔한 파도 위의 알찬 수익가", desc:"큰 위험을 피하면서도 꼬박꼬박 수익을 챙긴 알짜 투자자입니다." });
-            else if (finalAssets >= 1100)  earned.push({ tag:"A", title:"원금 수성에 성공한 신중론자", desc:"큰 손실 없이 원금 부근을 지켜낸 신중하고 차분한 투자자입니다." });
-            else if (finalAssets >= 800)   earned.push({ tag:"A", title:"절반의 손실을 막아낸 침착한 투자자", desc:"여러 번의 풍랑 속에서도 완전히 무너지지 않고 절반 이상의 자산을 지켜낸 투자자입니다." });
-            else if (finalAssets >= 600)   earned.push({ tag:"A", title:"쓰라린 교훈을 얻은 견습 상인", desc:"큰 손실을 보았지만 그 경험에서 값진 투자의 교훈을 얻은 견습 상인입니다." });
-            else if (finalAssets >= 400)   earned.push({ tag:"A", title:"풍랑에 휩쓸린 비운의 선주", desc:"여러 척의 배가 동시에 조난당하며 큰 타격을 입은 비운의 선주입니다." });
-            else                            earned.push({ tag:"A", title:"바다 밑바닥 개척의 기부천사", desc:"투자하는 족족 모든 상선이 침몰하는 파멸적인 확률을 뚫어낸 불운의 아이콘입니다." });
+            // ---- [A] 자산 규모 칭호 (도달한 모든 구간 전부 획득, 중첩 가능) ----
+            if (finalAssets >= 100000) earned.push({ tag:"A", title:"우주적 진리", desc:"10만 레알. 더 이상 숫자가 아니라 우주의 법칙처럼 여겨지는 경지. 시간과 공간, 시장의 논리마저 초월해 버린 존재입니다." });
+            if (finalAssets >= 70000)  earned.push({ tag:"A", title:"부의 창조신", desc:"7만 레알! 부를 그저 쌓는 것이 아니라 창조해내는 신의 영역에 도달했습니다." });
+            if (finalAssets >= 50000) earned.push({ tag:"A", title:"바다의 신 포세이돈", desc:"5만 레알! 인류 역사에서 단 한 번도 기록된 적 없는 전설의 수치. 대서양, 인도양, 태평양은 물론 신들의 바다까지 지배한 불멸의 존재. 그대의 이름은 영원히 역사에 새겨질 것입니다." });
+            if (finalAssets >= 30000) earned.push({ tag:"A", title:"대항해시대 바다의 황제", desc:"역사상 단 한 번도 달성된 적 없는 3만 레알의 경지. 대서양, 인도양, 태평양을 모두 손에 쥔 진정한 바다의 지배자입니다." });
+            if (finalAssets >= 20000) earned.push({ tag:"A", title:"신대륙을 손에 쥔 자", desc:"2만 레알을 달성하며 신대륙 전체의 자원과 항로를 손에 넣은 압도적인 지배자입니다." });
+            if (finalAssets >= 15000) earned.push({ tag:"A", title:"리스본을 흔든 큰손", desc:"1만 5천 레알의 자산으로 리스본 증권거래소 전체를 뒤흔든 거대한 손입니다." });
+            if (finalAssets >= 10000) earned.push({ tag:"A", title:"대항해시대의 조지 소로스", desc:"시장의 미세한 바람과 파동의 정점을 귀신같이 짚어내고 분산과 집중 투자를 혼용하여 동대륙 무역 역사를 홀로 새로 쓴 초인의 경지입니다." });
+            if (finalAssets >= 8000)  earned.push({ tag:"A", title:"신항로의 살아있는 전설", desc:"8척의 선단을 손바닥 위에 올려놓고 움직인 듯, 거의 모든 항로에서 압도적인 성과를 거둔 대부호입니다." });
+            if (finalAssets >= 5000)  earned.push({ tag:"A", title:"황금 나침반을 쥔 항해 투자자", desc:"위험과 기회를 정확히 가늠하는 직감으로 큰 성공을 거둔 노련한 투자자입니다." });
+            if (finalAssets >= 2000)  earned.push({ tag:"A", title:"포르투갈 왕실 인증 유능한 상인", desc:"안정적인 수익률로 왕실의 눈에 들 만큼 신뢰를 쌓은 상인입니다." });
+            if (finalAssets >= 1000)  earned.push({ tag:"A", title:"첫 항해 원금 두 배의 신참 거상", desc:"처음 도전한 투자임에도 원금을 두 배로 불려낸 재능 있는 신참입니다." });
+            if (finalAssets >= 800)   earned.push({ tag:"A", title:"절반의 손실을 막아낸 침착한 투자자", desc:"여러 번의 풍랑 속에서도 완전히 무너지지 않고 절반 이상의 자산을 지켜낸 투자자입니다." });
+            if (finalAssets >= 600)   earned.push({ tag:"A", title:"쓰라린 교훈을 얻은 견습 상인", desc:"큰 손실을 보았지만 그 경험에서 값진 투자의 교훈을 얻은 견습 상인입니다." });
+            if (finalAssets >= 400)   earned.push({ tag:"A", title:"풍랑에 휩쓸린 비운의 선주", desc:"여러 척의 배가 동시에 조난당하며 큰 타격을 입은 비운의 선주입니다." });
+            if (finalAssets < 400)    earned.push({ tag:"A", title:"바다 밑바닥 개척의 기부천사", desc:"투자하는 족족 모든 상선이 침몰하는 파멸적인 확률을 뚫어낸 불운의 아이콘입니다." });
 
             // ---- [B] 특수 달성 칭호 (복수 획득 가능) ----
             if (finalAssets >= 950 && finalAssets <= 1050)
@@ -3710,6 +3762,26 @@
             const highMultSucceeded = ownedShips.some(sid => ships[sid].currentMult >= 4.0 && !ships[sid]._ruined && portfolio[sid] > 0);
             if (highMultSucceeded)
                 earned.push({ tag:"F", title:"폭풍을 뚫은 대박 투자자", desc:"4배 이상의 고배율 선박이 실제로 항해에 성공하여 폭발적인 수익을 거둔 행운아입니다." });
+            const highMultSucceeded6 = ownedShips.some(sid => ships[sid].currentMult >= 6.0 && !ships[sid]._ruined && portfolio[sid] > 0);
+            if (highMultSucceeded6)
+                earned.push({ tag:"F", title:"희대의 승부사", desc:"6배 이상의 극고배율 선박을 성공으로 이끌어낸 희대의 승부사입니다." });
+            const highMultSucceeded8 = ownedShips.some(sid => ships[sid].currentMult >= 8.0 && !ships[sid]._ruined && portfolio[sid] > 0);
+            if (highMultSucceeded8)
+                earned.push({ tag:"F", title:"타짜", desc:"8배 이상의 신화적 배율을 성공시킨, 더 이상 투자자가 아니라 타짜라 불릴 자입니다." });
+
+            // 저성공률 선박 항해 성공 칭호 (성공 당시 확률 기준, 단계별 전부 획득 가능)
+            const lowProbSucceededShips = ownedShips
+                .filter(sid => !ships[sid]._ruined && portfolio[sid] > 0)
+                .map(sid => ships[sid].currentProb);
+            const bestLowProbSuccess = lowProbSucceededShips.length ? Math.min(...lowProbSucceededShips) : 101;
+            if (bestLowProbSuccess <= 40)
+                earned.push({ tag:"F", title:"버뮤다 삼각지대 돌파 작전", desc:"성공률 40% 이하의 위태로운 항로를 뚫고 무사히 귀환시킨 투자자입니다." });
+            if (bestLowProbSuccess <= 30)
+                earned.push({ tag:"F", title:"바다를 이긴 자", desc:"성공률 30% 이하의 험난한 바다를 정면으로 이겨낸 자입니다." });
+            if (bestLowProbSuccess <= 20)
+                earned.push({ tag:"F", title:"재앙을 견딘 자", desc:"성공률 20% 이하, 재앙에 가까운 확률을 뚫고 살아 돌아온 불멸의 생존자입니다." });
+            if (bestLowProbSuccess <= 10)
+                earned.push({ tag:"F", title:"크라켄을 잠재운 자", desc:"성공률 10% 이하의 신화적 확률을 뚫어내며 전설의 괴물 크라켄마저 잠재운 자입니다." });
             // 5. 대규모 투자
             if (buyActionCount + sellActionCount >= 60 && finalAssets >= 3000)
                 earned.push({ tag:"F", title:"부지런한 시장의 개미", desc:"수십 차례의 매매를 거듭하며 성실하게 수익을 쌓아올린 부지런한 투자자입니다." });
@@ -3745,6 +3817,39 @@
             // 15. 첫 라운드부터 마지막까지 동일 포트폴리오 유지 감지용 (매도 0)
             if (sellActionCount === 0 && buyActionCount >= 5 && finalAssets >= 1500)
                 earned.push({ tag:"F", title:"불굴의 장기 보유자", desc:"단 한 주도 팔지 않고 모든 선단을 끝까지 보유한 채 성과를 거둔 강철 의지의 장기 투자자입니다." });
+
+            // ---- [G] 판수 칭호 (결과를 본 판수 기준, 도달한 모든 구간 전부 획득) ----
+            if (playCount >= 100) earned.push({ tag:"G", title:"미쳤음 청년", desc:"100판! 이쯔음이면 그냥 미친 거다. 대항해시대와 한 몸이 된 전설의 인물입니다." });
+            if (playCount >= 70)  earned.push({ tag:"G", title:"진짜 끝까지 했음 청년", desc:"70판을 채운, 끈기로는 이미 졌다고 인정할 수밖에 없는 청년입니다." });
+            if (playCount >= 50)  earned.push({ tag:"G", title:"인생을 바쳤음 청년", desc:"50판. 이쯔음이면 인생의 일부를 갈아넣은 수준입니다." });
+            if (playCount >= 30)  earned.push({ tag:"G", title:"중독됐음 청년", desc:"30판을 넘기며 이제는 못 끊는 단계에 접어든 청년입니다." });
+            if (playCount >= 20)  earned.push({ tag:"G", title:"또 했음 청년", desc:"20판째. 그만하라는 말이 안 들리는 청년입니다." });
+            if (playCount >= 10)  earned.push({ tag:"G", title:"꽤 했음 청년", desc:"10판을 채운, 이제 좀 익숙해진 청년입니다." });
+            if (playCount >= 5)   earned.push({ tag:"G", title:"제법 했음 청년", desc:"5판을 넘기며 슬슬 감을 잡은 청년입니다." });
+            if (playCount >= 1)   earned.push({ tag:"G", title:"열심히 했음 청년", desc:"첫 항해를 끝까지 완수한, 열심히 한 청년입니다." });
+
+            // ---- [H] 누적 자본 칭호 (역대 모든 최종 자산의 합산 기준, 도달한 모든 구간 전부 획득) ----
+            if (totalCapitalSum >= 500000) earned.push({ tag:"H", title:"먹고 죽어도 남는 돈", desc:"누적 자본 50만 레알! 이제 평생 먹고 죽어도 남을 돈을 쌓아올린 전설의 거상입니다." });
+            if (totalCapitalSum >= 300000) earned.push({ tag:"H", title:"이 정도면 가문의 영광", desc:"누적 자본 30만 레알을 넘기며 가문 대대로 자랑할 업적을 세웠습니다." });
+            if (totalCapitalSum >= 150000) earned.push({ tag:"H", title:"평생 놀고 먹어도 되는 수준", desc:"누적 자본 15만 레알. 더 이상 일할 필요가 없는 수준에 도달했습니다." });
+            if (totalCapitalSum >= 80000)  earned.push({ tag:"H", title:"통장이 무거워진 자", desc:"누적 자본 8만 레알. 통장 잔고가 묵직해진 자입니다." });
+            if (totalCapitalSum >= 40000)  earned.push({ tag:"H", title:"꾸준함이 만든 부자", desc:"누적 자본 4만 레알을 차곡차곡 쌓아올린 꾸준함의 결과물입니다." });
+            if (totalCapitalSum >= 20000)  earned.push({ tag:"H", title:"조금씩 불어나는 곳간", desc:"누적 자본 2만 레알. 곳간이 조금씩 든든해지고 있습니다." });
+            if (totalCapitalSum >= 10000)  earned.push({ tag:"H", title:"티끌 모아 태산 진행중", desc:"누적 자본 1만 레알을 넘기며 티끌이 태산이 되어가는 중입니다." });
+            if (totalCapitalSum >= 3000)   earned.push({ tag:"H", title:"첫 곳간을 채운 자", desc:"누적 자본 3,000 레알. 차곡차곡 모으기 시작한 자입니다." });
+
+            // ---- [I] 칭호 개수 칭호 (이번 판 신규 획득분 포함, 도달한 모든 구간 전부 획득) ----
+            const newDistinctEarnedCount = new Set(earned.map(t => t.title)).size;
+            const projectedTitleCount = existingTitleCount + newDistinctEarnedCount;
+            if (projectedTitleCount >= 70) earned.push({ tag:"I", title:"역사의 증인", desc:"칭호 70개! 대항해시대의 모든 영광과 비극을 두 눈으로 직접 목격하고 기록한 역사의 증인입니다." });
+            if (projectedTitleCount >= 55) earned.push({ tag:"I", title:"이 구역 정신 나간 수집가", desc:"칭호 55개! 이 구역에서 가장 정신 나간 수집가로 인정합니다." });
+            if (projectedTitleCount >= 45) earned.push({ tag:"I", title:"칭호 박물관 관장", desc:"칭호 45개를 모아 박물관을 차려도 될 수준에 도달했습니다." });
+            if (projectedTitleCount >= 35) earned.push({ tag:"I", title:"웬만한 건 다 해본 자", desc:"칭호 35개. 이제 웬만한 플레이는 다 경험해 본 자입니다." });
+            if (projectedTitleCount >= 25) earned.push({ tag:"I", title:"칭호 욕심쟁이", desc:"칭호 25개를 모으며 욕심을 숨기지 못한 수집가입니다." });
+            if (projectedTitleCount >= 18) earned.push({ tag:"I", title:"제법 모았음", desc:"칭호 18개를 모은, 제법 본격적인 수집가입니다." });
+            if (projectedTitleCount >= 12) earned.push({ tag:"I", title:"수집 본능 각성", desc:"칭호 12개를 모으며 수집 본능이 각성한 단계입니다." });
+            if (projectedTitleCount >= 6)  earned.push({ tag:"I", title:"칭호 수집 입문자", desc:"칭호 6개를 모아 본격적인 수집의 길에 들어섰습니다." });
+            if (projectedTitleCount >= 3)  earned.push({ tag:"I", title:"칭호 첫걸음", desc:"칭호 3개를 모으며 수집의 첫걸음을 뗐습니다." });
 
             // ---- 기본 칭호 (항상 포함) ----
             if (earned.length === 1 && earned[0].tag === 'A' && finalAssets < 1100)
@@ -3868,14 +3973,22 @@
         var TITLE_RARITY = {
             "바다의 신 포세이돈": 120,
             "대항해시대 바다의 황제": 100,
-            "대항해시대의 조지 소로스": 95,
-            "신항로의 살아있는 전설": 88,
+            "우주적 진리": 145,
+            "부의 창조신": 125,
+            "신대륙을 손에 쥔 자": 93,
+            "리스본을 흔든 큰손": 88,
+            "대항해시대의 조지 소로스": 83,
+            "신항로의 살아있는 전설": 78,
             "하이리스크 하이리턴 레이서": 85,
             "절체절명의 역전 드라마": 82,
             "마젤란의 후계자": 80,
-            "리스본 증권거래소의 제왕": 75,
-            "동인도 무역의 떠오르는 거성": 72,
             "폭풍을 뚫은 대박 투자자": 70,
+            "희대의 승부사": 92,
+            "타짜": 115,
+            "버뮤다 삼각지대 돌파 작전": 55,
+            "바다를 이긴 자": 76,
+            "재앙을 견딘 자": 91,
+            "크라켄을 잠재운 자": 112,
             "목숨을 건 올인 도박사": 68,
             "팔방미인 전천후 투자자": 66,
             "무사귀환의 선단장": 64,
@@ -3888,13 +4001,10 @@
             "신대륙 구황식물 보급왕": 47,
             "인도 후추 무역의 선구자": 45,
             "카리브해 설탕 농장의 큰손": 43,
-            "리스본 항구의 떠오르는 큰손": 40,
             "움직이는 인간 포트폴리오": 38,
             "단 하나의 별을 따른 자": 36,
             "안전제일 리스크 관리자": 34,
             "위험을 먹고 사는 모험가": 34,
-            "대서양 무역의 안정적 강자": 30,
-            "신항로 개척의 유망주": 28,
             "포르투갈 왕실 인증 유능한 상인": 26,
             "집중투자 신봉자": 24,
             "선택과 집중의 이원 전략가": 22,
@@ -3910,13 +4020,11 @@
             "악명 높은 해적 자본가": 13,
             "영혼 없는 냉혈 자본가": 12,
             "완벽한 평화 본전치기 선구자": 10,
-            "성공적인 첫 항해를 마친 신참 거상": 9,
-            "잔잔한 파도 위의 알찬 수익가": 8,
+            "첫 항해 원금 두 배의 신참 거상": 9,
             "현금이 왕이다": 7,
             "지중해의 애처로운 망령": 7,
             "저주받은 항로의 선주": 6,
             "풍랑 속 생존자": 6,
-            "원금 수성에 성공한 신중론자": 5,
             "절반의 손실을 막아낸 침착한 투자자": 4,
             "쓰라린 교훈을 얻은 견습 상인": 3,
             "풍랑에 휩쓸린 비운의 선주": 2,
@@ -3924,7 +4032,35 @@
             "바다의 기부 천사 (알거지)": 2,
             "항구를 떠나지 않은 겁쟁이": 1,
             "구경꾼 거상": 1,
-            "평범한 시장의 관찰자": 1
+            "평범한 시장의 관찰자": 1,
+            // 판수 칭호 (SSS~C)
+            "미쳤음 청년": 95,
+            "진짜 끝까지 했음 청년": 80,
+            "인생을 바쳤음 청년": 60,
+            "중독됐음 청년": 45,
+            "또 했음 청년": 25,
+            "꽤 했음 청년": 15,
+            "제법 했음 청년": 8,
+            "열심히 했음 청년": 3,
+            // 누적 자본 칭호 (SSS~C)
+            "먹고 죽어도 남는 돈": 95,
+            "이 정도면 가문의 영광": 80,
+            "평생 놀고 먹어도 되는 수준": 60,
+            "통장이 무거워진 자": 45,
+            "꾸준함이 만든 부자": 25,
+            "조금씩 불어나는 곳간": 15,
+            "티끌 모아 태산 진행중": 8,
+            "첫 곳간을 채운 자": 3,
+            // 칭호 개수 칭호 (SSS~C)
+            "역사의 증인": 113,
+            "이 구역 정신 나간 수집가": 95,
+            "칭호 박물관 관장": 80,
+            "웬만한 건 다 해본 자": 60,
+            "칭호 욕심쟁이": 45,
+            "제법 모았음": 25,
+            "수집 본능 각성": 15,
+            "칭호 수집 입문자": 8,
+            "칭호 첫걸음": 3
         };
         function getTitleRarity(title) { return TITLE_RARITY[title] || 5; }
 
@@ -3949,6 +4085,7 @@
             return { level: level, exp: totalExp, pct: pct, nextLvExp: nextLvExp };
         }
         function getTitleRarityLabel(rarity) {
+            if (rarity >= 140) return { label: '♾️', color: '#e879f9' };
             if (rarity >= 110) return { label: '🔱', color: '#00c8ff' };
             if (rarity >= 90) return { label: 'SSS', color: '#ff6b35' };
             if (rarity >= 75) return { label: 'SS',  color: '#f59e0b' };
@@ -4472,7 +4609,7 @@
             const btn = document.getElementById('moral-score-btn');
             if (!tip || !btn) return;
             const score = ethicalScore;
-            const scoreFloor = Math.floor(score);
+            const scoreFloor = score;
             const displayScore = Number.isInteger(score) ? score : score.toFixed(2);
             // 현재 상태
             let statusColor = '#9e7a4a', statusText = '중립 — 패널티/보너스 없음';
@@ -5100,6 +5237,7 @@
 
         function applyGameScale() {
             const vw = window.innerWidth;
+            const vh = window.innerHeight;
             const isMobile = vw < 1024;
             const isGameScreen = !document.getElementById('screen-game').classList.contains('hidden');
             const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -5111,10 +5249,18 @@
             }
 
             // game-landscape 클래스 토글
+            const root = document.getElementById('scale-root');
             if (_forcedLandscape && isMobile && isGameScreen) {
                 document.body.classList.add('game-landscape');
+                // PC 기준 해상도(1366x768)를 화면 크기에 맞춰 비율 유지 축소/확대
+                const BASE_W = 1366, BASE_H = 768;
+                const scale = Math.min(vw / BASE_W, vh / BASE_H);
+                if (root) {
+                    root.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                }
             } else {
                 document.body.classList.remove('game-landscape');
+                if (root) root.style.transform = '';
             }
         }
 
@@ -5126,6 +5272,7 @@
         }
 
         window.addEventListener('resize', applyGameScale);
+        window.addEventListener('orientationchange', function() { setTimeout(applyGameScale, 50); });
 
         window.onload = function() {
             updateUI();
@@ -5147,20 +5294,29 @@
 
         // 전체 칭호 목록 (모든 존재 칭호 + 내가 획득한 것 표시)
         const ALL_TITLES_LIST = [
+            // 신화
+            {title:"우주적 진리", rarity:145, hint:"최종 자산 100,000 레알 이상 달성"},
+            {title:"부의 창조신", rarity:125, hint:"최종 자산 70,000 레알 이상 달성"},
             // SSSS (전설)
             {title:"바다의 신 포세이돈", rarity:120, hint:"최종 자산 50,000 레알 이상 달성 (전설의 경지)"},
             // SSS
             {title:"대항해시대 바다의 황제", rarity:100, hint:"최종 자산 30,000 레알 이상 달성"},
-            {title:"대항해시대의 조지 소로스", rarity:95, hint:"최종 자산 10,000 레알 이상 달성"},
             // SS
-            {title:"신항로의 살아있는 전설", rarity:88, hint:"최종 자산 8,000 레알 이상 달성"},
+            {title:"신대륙을 손에 쥔 자", rarity:93, hint:"최종 자산 20,000 레알 이상 달성"},
             {title:"하이리스크 하이리턴 레이서", rarity:85, hint:"올인 경험이 있으면서 최종 자산 5,000 레알 이상 달성"},
             {title:"절체절명의 역전 드라마", rarity:82, hint:"올인 경험이 있으면서 최종 자산 4,000 레알 이상 달성"},
             {title:"마젤란의 후계자", rarity:80, hint:"빅토리아 호(F)에 투자 후 배율 4.0 이상으로 항해 성공"},
+            {title:"리스본을 흔든 큰손", rarity:88, hint:"최종 자산 15,000 레알 이상 달성"},
+            {title:"대항해시대의 조지 소로스", rarity:83, hint:"최종 자산 10,000 레알 이상 달성"},
+            {title:"신항로의 살아있는 전설", rarity:78, hint:"최종 자산 8,000 레알 이상 달성"},
             // S
-            {title:"리스본 증권거래소의 제왕", rarity:75, hint:"최종 자산 7,000 레알 이상 달성"},
-            {title:"동인도 무역의 떠오르는 거성", rarity:72, hint:"최종 자산 6,000 레알 이상 달성"},
             {title:"폭풍을 뚫은 대박 투자자", rarity:70, hint:"배율 4.0 이상인 선박이 항해에 성공"},
+            {title:"희대의 승부사", rarity:92, hint:"배율 6.0 이상인 선박이 항해에 성공"},
+            {title:"타짜", rarity:115, hint:"배율 8.0 이상인 선박이 항해에 성공"},
+            {title:"버뮤다 삼각지대 돌파 작전", rarity:55, hint:"성공 시점 성공률 40% 이하 선박의 항해 성공"},
+            {title:"바다를 이긴 자", rarity:76, hint:"성공 시점 성공률 30% 이하 선박의 항해 성공"},
+            {title:"재앙을 견딘 자", rarity:91, hint:"성공 시점 성공률 20% 이하 선박의 항해 성공"},
+            {title:"크라켄을 잠재운 자", rarity:112, hint:"성공 시점 성공률 10% 이하 선박의 항해 성공"},
             {title:"목숨을 건 올인 도박사", rarity:68, hint:"단일 선박에 자산의 85% 이상 집중 투자"},
             {title:"팔방미인 전천후 투자자", rarity:66, hint:"8척 선단 모두에 투자 경험"},
             {title:"무사귀환의 선단장", rarity:64, hint:"3척 이상 투자 + 투자 선박 전원 생환 + 최종 자산 1,500 레알 이상"},
@@ -5174,14 +5330,11 @@
             {title:"신대륙 구황식물 보급왕", rarity:47, hint:"산 프란시스코 호(D) 수익이 최종 자산의 55% 이상"},
             {title:"인도 후추 무역의 선구자", rarity:45, hint:"산타 마리아 호(A) 수익이 최종 자산의 55% 이상"},
             {title:"카리브해 설탕 농장의 큰손", rarity:43, hint:"이스파뇰라 호(G) 수익이 최종 자산의 45% 이상"},
-            {title:"리스본 항구의 떠오르는 큰손", rarity:40, hint:"최종 자산 4,000 레알 이상 달성"},
             {title:"움직이는 인간 포트폴리오", rarity:38, hint:"7척 이상 선단에 투자 경험"},
             {title:"단 하나의 별을 따른 자", rarity:36, hint:"딱 1척 선단에만 투자"},
             {title:"안전제일 리스크 관리자", rarity:34, hint:"성공률 최고 선박에 가장 많이 투자"},
             {title:"위험을 먹고 사는 모험가", rarity:34, hint:"성공률 최저 선박에 가장 많이 투자"},
             // B
-            {title:"대서양 무역의 안정적 강자", rarity:30, hint:"최종 자산 3,000 레알 이상 달성"},
-            {title:"신항로 개척의 유망주", rarity:28, hint:"최종 자산 2,500 레알 이상 달성"},
             {title:"포르투갈 왕실 인증 유능한 상인", rarity:26, hint:"최종 자산 2,000 레알 이상 달성"},
             {title:"집중투자 신봉자", rarity:24, hint:"단일 선박에 자산의 70~84% 집중 투자"},
             {title:"선택과 집중의 이원 전략가", rarity:22, hint:"딱 2척 선단에만 투자"},
@@ -5198,13 +5351,11 @@
             {title:"영혼 없는 냉혈 자본가", rarity:12, hint:"노예선(E)에 누적 500 레알 이상 투자"},
             // C
             {title:"완벽한 평화 본전치기 선구자", rarity:10, hint:"최종 자산이 950~1,050 레알 (원금 근처)"},
-            {title:"성공적인 첫 항해를 마친 신참 거상", rarity:9, hint:"최종 자산 1,700 레알 이상 달성"},
-            {title:"잔잔한 파도 위의 알찬 수익가", rarity:8, hint:"최종 자산 1,400 레알 이상 달성"},
+            {title:"첫 항해 원금 두 배의 신참 거상", rarity:9, hint:"최종 자산 1,000 레알 이상 달성"},
             {title:"현금이 왕이다", rarity:7, hint:"보유 현금이 최종 자산의 80% 이상 + 최종 자산 1,000 레알 초과"},
             {title:"지중해의 애처로운 망령", rarity:7, hint:"레반트의 별 호(H) 수익이 최종 자산의 55% 이상"},
             {title:"저주받은 항로의 선주", rarity:6, hint:"3척 이상 선박 성공률 0% 파산"},
             {title:"풍랑 속 생존자", rarity:6, hint:"최종 자산 800~1,199 레알 + 매수 5회·3척 이상 투자"},
-            {title:"원금 수성에 성공한 신중론자", rarity:5, hint:"최종 자산 1,100 레알 이상 달성"},
             {title:"절반의 손실을 막아낸 침착한 투자자", rarity:4, hint:"최종 자산 800 레알 이상 달성"},
             {title:"쓰라린 교훈을 얻은 견습 상인", rarity:3, hint:"최종 자산 600 레알 이상 달성"},
             {title:"풍랑에 휩쓸린 비운의 선주", rarity:2, hint:"최종 자산 400 레알 이상 달성"},
@@ -5213,6 +5364,34 @@
             {title:"항구를 떠나지 않은 겁쟁이", rarity:1, hint:"한 번도 투자하지 않음 (매수 0회)"},
             {title:"구경꾼 거상", rarity:1, hint:"현금 900 레알 이상 보유하면서 투자 선단 수 0"},
             {title:"평범한 시장의 관찰자", rarity:1, hint:"특별한 조건 없이 게임 종료"},
+            // 판수 칭호 (결과를 본 판수 누적, 나가기 제외)
+            {title:"미쳤음 청년", rarity:95, hint:"누적 100판 완료"},
+            {title:"진짜 끝까지 했음 청년", rarity:80, hint:"누적 70판 완료"},
+            {title:"인생을 바쳤음 청년", rarity:60, hint:"누적 50판 완료"},
+            {title:"중독됐음 청년", rarity:45, hint:"누적 30판 완료"},
+            {title:"또 했음 청년", rarity:25, hint:"누적 20판 완료"},
+            {title:"꽤 했음 청년", rarity:15, hint:"누적 10판 완료"},
+            {title:"제법 했음 청년", rarity:8, hint:"누적 5판 완료"},
+            {title:"열심히 했음 청년", rarity:3, hint:"누적 1판 완료"},
+            // 누적 자본 칭호 (역대 모든 최종 자산 합산)
+            {title:"먹고 죽어도 남는 돈", rarity:95, hint:"누적 자본 500,000 레알 이상"},
+            {title:"이 정도면 가문의 영광", rarity:80, hint:"누적 자본 300,000 레알 이상"},
+            {title:"평생 놀고 먹어도 되는 수준", rarity:60, hint:"누적 자본 150,000 레알 이상"},
+            {title:"통장이 무거워진 자", rarity:45, hint:"누적 자본 80,000 레알 이상"},
+            {title:"꾸준함이 만든 부자", rarity:25, hint:"누적 자본 40,000 레알 이상"},
+            {title:"조금씩 불어나는 곳간", rarity:15, hint:"누적 자본 20,000 레알 이상"},
+            {title:"티끌 모아 태산 진행중", rarity:8, hint:"누적 자본 10,000 레알 이상"},
+            {title:"첫 곳간을 채운 자", rarity:3, hint:"누적 자본 3,000 레알 이상"},
+            // 칭호 개수 칭호
+            {title:"역사의 증인", rarity:113, hint:"칭호 70개 이상 보유"},
+            {title:"이 구역 정신 나간 수집가", rarity:95, hint:"칭호 55개 이상 보유"},
+            {title:"칭호 박물관 관장", rarity:80, hint:"칭호 45개 이상 보유"},
+            {title:"웬만한 건 다 해본 자", rarity:60, hint:"칭호 35개 이상 보유"},
+            {title:"칭호 욕심쟁이", rarity:45, hint:"칭호 25개 이상 보유"},
+            {title:"제법 모았음", rarity:25, hint:"칭호 18개 이상 보유"},
+            {title:"수집 본능 각성", rarity:15, hint:"칭호 12개 이상 보유"},
+            {title:"칭호 수집 입문자", rarity:8, hint:"칭호 6개 이상 보유"},
+            {title:"칭호 첫걸음", rarity:3, hint:"칭호 3개 이상 보유"},
         ];
 
         function showRouteModal(shipId) {
@@ -5327,11 +5506,20 @@
             modal.addEventListener('mouseleave', hideTooltip);
 
             function renderModal(myTitleSet) {
-                const lv = calcExpAndLevel(Array.from(myTitleSet));
+                let myStats = { playCount: 0, totalAssetsSum: 0 };
+                if (isLoggedIn) {
+                    const statKey = `aov_stats_${cls}_${num}_${name}`;
+                    try { myStats = JSON.parse(localStorage.getItem(statKey) || '{}'); } catch(e){}
+                }
+                const lv = isLoggedIn
+                    ? calcExpAndLevel(Array.from(myTitleSet), myStats.playCount || 0, myStats.totalAssetsSum || 0)
+                    : { level: 1, exp: 0 };
+                const displayName = isLoggedIn ? (name || '나') : '나';
                 let rows = '';
-                ALL_TITLES_LIST.forEach(function(entry) {
+                const sortedTitles = ALL_TITLES_LIST.slice().sort(function(a, b) { return b.rarity - a.rarity; });
+                sortedTitles.forEach(function(entry) {
                     const rl = getTitleRarityLabel(entry.rarity);
-                    const owned = myTitleSet.has(entry.title);
+                    const owned = isLoggedIn && myTitleSet.has(entry.title);
                     const hintText = entry.hint ? ('📋 획득 조건: ' + entry.hint) : '';
                     rows += '<div data-hint="' + hintText.replace(/"/g, '&quot;') + '" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';cursor:help;">'
                       + '<span style="min-width:32px;font-size:9px;font-weight:900;color:'+rl.color+';background:'+rl.color+'22;border:1px solid '+rl.color+'44;border-radius:3px;padding:1px 4px;text-align:center;">['+rl.label+']</span>'
@@ -5342,12 +5530,14 @@
                 const notice = !isLoggedIn
                     ? '<div style="font-size:11px;color:#b45309;background:rgba(200,150,12,0.12);border:1px solid rgba(200,150,12,0.3);border-radius:8px;padding:8px 12px;margin-bottom:8px;text-align:center;">반, 이름, 비밀번호를 입력하면 획득한 칭호가 표시됩니다.</div>'
                     : '';
+                const statsLine = isLoggedIn
+                    ? (myTitleSet.size + ' / ' + ALL_TITLES_LIST.length + '개 획득 &nbsp;·&nbsp; Lv.' + lv.level + ' &nbsp;·&nbsp; ' + lv.exp + ' exp')
+                    : '0 / ' + ALL_TITLES_LIST.length + '개 획득';
                 modal.innerHTML = '<div style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid rgba(139,90,43,0.5);border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">'
                   + '<div style="padding:14px 16px 10px;border-bottom:1px solid rgba(139,90,43,0.25);display:flex;align-items:center;justify-content:space-between;">'
                   + '<div>'
-                  + '<div style="font-weight:900;font-size:14px;color:#3d1a00;">📖 ' + (name || '나') + '의 칭호 컬렉션</div>'
-                  + '<div style="font-size:11px;color:#7a5c2e;margin-top:2px;">'
-                  + myTitleSet.size + ' / ' + ALL_TITLES_LIST.length + '개 획득 &nbsp;·&nbsp; Lv.' + lv.level + ' &nbsp;·&nbsp; ' + lv.exp + ' exp</div>'
+                  + '<div style="font-weight:900;font-size:14px;color:#3d1a04;">📖 ' + displayName + '의 칭호 컬렉션</div>'
+                  + '<div style="font-size:11px;color:#7a5c2e;margin-top:2px;">' + statsLine + '</div>'
                   + '</div>'
                   + '<button onclick="document.getElementById(&quot;title-collection-modal&quot;).remove()" style="font-size:18px;color:#7a5c2e;background:none;border:none;cursor:pointer;padding:0 4px;">✕</button>'
                   + '</div>'
