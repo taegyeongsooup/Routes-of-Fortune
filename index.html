@@ -3209,8 +3209,10 @@
 
         // ------------------------------------------------------------
         // 캐릭터 해금 진행도 (기디언/안드레아처럼 "한 판 안에서" 조건을 만족했는지 영구 기록)
-        // 현재는 로컬스토리지 기준으로 판정한다. 서버 분리 시, 이 판정은 결과 제출 시점에
-        // 서버가 그 판의 ethicalScore/finalAssets/papalDonationCount를 직접 검증하도록 옮기면 된다.
+        // 황금열쇠와 동일한 패턴: 로컬스토리지 + 구글시트('투자자' 시트) 양쪽에 저장하고,
+        // 불러올 때는 둘 중 "해금된" 쪽을 채택해서 병합한다 (한번 해금되면 절대 취소되지 않음).
+        // 이렇게 해야 패치 배포·캐시 초기화·다른 기기 접속 등으로 로컬스토리지가 날아가도
+        // 시트에 남은 기록을 통해 해금 상태가 그대로 복원된다.
         // ------------------------------------------------------------
         function getCharacterProgressKey(cls, num, name) {
             return `aov_characterProgress_${cls}_${num}_${name}`;
@@ -3220,15 +3222,53 @@
                 return JSON.parse(localStorage.getItem(getCharacterProgressKey(cls, num, name)) || '{}');
             } catch(e) { return {}; }
         }
+        // 진행도 객체 두 개를 병합한다. 어느 한쪽이라도 true인 키는 결과도 true.
+        // (해금은 한번 성립하면 영구적이어야 하므로, OR 병합이 핵심)
+        function mergeCharacterProgress(a, b) {
+            const result = {};
+            const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+            keys.forEach(k => { result[k] = !!(a && a[k]) || !!(b && b[k]); });
+            return result;
+        }
         function saveCharacterProgress(cls, num, name, progress) {
             try {
                 localStorage.setItem(getCharacterProgressKey(cls, num, name), JSON.stringify(progress));
             } catch(e) {}
+            // GET 방식으로 시트 저장 (no-cors 문제 우회, 응답 확인 가능) — 황금열쇠와 동일 패턴
+            if (SHEET_WEBHOOK_URL && cls && name) {
+                const url = `${SHEET_WEBHOOK_URL}?action=saveCharProgress&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}&progress=${encodeURIComponent(JSON.stringify(progress))}`;
+                fetch(url, { method: 'GET' })
+                    .then(r => r.json())
+                    .then(d => { if (!d.ok) throw new Error('saveCharProgress 실패'); })
+                    .catch(() => {
+                        // 실패 시 1회 재시도
+                        setTimeout(() => fetch(url).catch(() => {}), 2000);
+                    });
+            }
         }
-        // 현재는 시트에 캐릭터 진행도 전용 엔드포인트가 없으므로 로컬값만 읽어온다.
-        // (결과 제출 시 payload에 진행도 플래그를 함께 보내 시트에는 기록만 남긴다)
+        // 시트에서 캐릭터 해금 진행도를 불러와 로컬과 "해금된 쪽 우선"으로 병합
         async function syncCharacterProgressFromSheet(cls, num, name) {
-            characterProgressCache = loadCharacterProgress(cls, num, name);
+            const localProgress = loadCharacterProgress(cls, num, name);
+            if (!SHEET_WEBHOOK_URL) {
+                characterProgressCache = localProgress;
+                return;
+            }
+            try {
+                const res = await fetch(`${SHEET_WEBHOOK_URL}?action=getCharProgress&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}`);
+                const data = await res.json();
+                const sheetProgress = data.progress || {};
+                const merged = mergeCharacterProgress(sheetProgress, localProgress);
+                characterProgressCache = merged;
+                localStorage.setItem(getCharacterProgressKey(cls, num, name), JSON.stringify(merged));
+                // 로컬에만 있고 시트엔 없던 해금 기록이 있으면, 시트에도 다시 올려서 보정
+                const sheetMissingSomething = Object.keys(merged).some(k => merged[k] && !sheetProgress[k]);
+                if (sheetMissingSomething) {
+                    saveCharacterProgress(cls, num, name, merged);
+                }
+            } catch(e) {
+                // 네트워크 오류 시 로컬값 유지
+                characterProgressCache = localProgress;
+            }
         }
         let characterProgressCache = {};
 
@@ -4884,8 +4924,10 @@
 
             // 캐릭터 해금 진행도 갱신 — 이번 판의 결과(도덕점수/최종자산/교황청기부횟수)로 조건 충족 여부를 영구 기록
             // (한번 충족하면 계속 해금 유지, 다시 충족 못 해도 해제되지 않음)
+            // characterProgressCache는 게임 시작 전 syncCharacterProgressFromSheet()로 시트와 병합된 최신값이므로
+            // 이것을 기준으로 시작해야 시트에만 있던 기록(다른 기기에서 해금한 경우 등)을 놓치지 않는다.
             {
-                const progress = loadCharacterProgress(playerClass, playerNumber, playerName);
+                const progress = { ...characterProgressCache };
                 if (ethicalScore >= 10 && finalAssets >= 15000) {
                     progress.gideonUnlocked = true;
                 }
@@ -7500,7 +7542,14 @@
             }
 
             const level = calcExpAndLevel(Array.from(titleSet), playCount, totalCapitalSum).level;
-            const progress = loadCharacterProgress(cls, num, name);
+            let progress = loadCharacterProgress(cls, num, name);
+            if (SHEET_WEBHOOK_URL) {
+                try {
+                    const cpRes = await fetch(`${SHEET_WEBHOOK_URL}?action=getCharProgress&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}`);
+                    const cpData = await cpRes.json();
+                    progress = mergeCharacterProgress(cpData.progress || {}, progress);
+                } catch(e) { /* 네트워크 실패 시 로컬 데이터만으로 판정 */ }
+            }
             return { level, titleSet, totalCapitalSum, playCount, characterProgress: progress };
         }
 
@@ -7586,6 +7635,15 @@
                         ${CHARACTERS.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                     </select>
                     <button onclick="adminForceCharacter()" style="background:#7a4a1a;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;width:100%;">선택 투자자로 강제 전환 (효과 재적용)</button>
+                </div>
+
+                <div style="border-top:1px solid rgba(200,150,12,0.25);padding-top:8px;margin-bottom:8px;">
+                    <div style="font-weight:700;color:#f59e0b;margin-bottom:4px;">투자자 강제 해금 지급 (기존 플레이어 복구용)</div>
+                    <div style="font-size:9px;color:#7a5c2e;margin-bottom:5px;line-height:1.5;">상단 반/번호/이름 입력칸에 적힌 계정에 즉시 해금을 지급합니다. 시트('투자자' 시트)와 로컬에 동시 기록되며, 해당 학생이 다음에 접속하면 바로 적용됩니다.</div>
+                    <div style="display:flex;gap:4px;margin-bottom:4px;">
+                        <button onclick="adminGrantCharacterUnlock('gideonUnlocked', '기디언')" style="background:#15803d;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;flex:1;">기디언 지급</button>
+                        <button onclick="adminGrantCharacterUnlock('andreaUnlocked', '안드레아')" style="background:#15803d;color:#fff;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;flex:1;">안드레아 지급</button>
+                    </div>
                 </div>
 
                 <div style="border-top:1px solid rgba(200,150,12,0.25);padding-top:8px;">
@@ -7699,11 +7757,37 @@
             showCustomAlert(`🛠️ [운영자] 선택 투자자를 '${getCharacterById(selectedCharacterId).name}'(으)로 강제 전환했습니다. (단, gameStart 효과는 이미 지나간 시점에는 재적용되지 않습니다 — 새 게임 시작을 권장)`);
         }
 
+        // 특정 계정에 캐릭터 해금을 강제로 지급 — 패치 전 로컬스토리지가 날아가
+        // 해금 기록을 잃어버린 학생을 복구할 때 사용. saveCharacterProgress가
+        // 로컬+시트 둘 다 OR 병합으로 저장하므로, 이 진행도는 영구히 유지된다.
+        function adminGrantCharacterUnlock(progressKey, charName) {
+            const { cls, num, name } = _adminGetCurrentAccount();
+            if (!name) { showCustomAlert('반/이름을 먼저 입력해야 적용할 계정을 알 수 있습니다.'); return; }
+            const existing = loadCharacterProgress(cls, num, name);
+            const merged = { ...existing, [progressKey]: true };
+            saveCharacterProgress(cls, num, name, merged);
+            // 지금 운영자가 입력한 계정이 현재 로그인된 본인 계정과 같다면, 화면에도 바로 반영
+            if (cls === playerClass && num === playerNumber && name === playerName) {
+                characterProgressCache = merged;
+            }
+            showCustomAlert(`🛠️ [운영자] ${name} 계정에 '${charName}' 투자자를 해금 지급했습니다. (로컬+시트 동시 기록)`);
+            if (!document.getElementById('screen-character-select').classList.contains('hidden')) {
+                renderCharacterSelectGrid();
+            }
+        }
+
         function adminResetCharacterProgress() {
             const { cls, num, name } = _adminGetCurrentAccount();
             if (!name) { showCustomAlert('반/이름을 먼저 입력해야 적용할 계정을 알 수 있습니다.'); return; }
-            saveCharacterProgress(cls, num, name, {});
+            try {
+                localStorage.setItem(getCharacterProgressKey(cls, num, name), JSON.stringify({}));
+            } catch(e) {}
             characterProgressCache = {};
+            // 시트도 병합이 아닌 완전 덮어쓰기로 초기화 (saveCharacterProgress는 병합되므로 별도 액션 사용)
+            if (SHEET_WEBHOOK_URL && cls && name) {
+                fetch(`${SHEET_WEBHOOK_URL}?action=resetCharProgress&cls=${encodeURIComponent(cls)}&num=${encodeURIComponent(num)}&name=${encodeURIComponent(name)}`)
+                    .catch(() => {});
+            }
             showCustomAlert(`🛠️ [운영자] ${name} 계정의 투자자 진행도(기디언/안드레아 해금기록)를 초기화했습니다.`);
             if (!document.getElementById('screen-character-select').classList.contains('hidden')) {
                 renderCharacterSelectGrid();
