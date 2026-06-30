@@ -753,6 +753,11 @@
         let bgmAudio = null;   // BGM Audio 객체
         let bgmStarted = false;
 
+        function getKSTTimestamp() {
+            const kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+            return kst.toISOString().replace('Z', '+09:00');
+        }
+
         function saveVolumeSettings() {
             localStorage.setItem('aov_sfxVolume', sfxVolume);
             localStorage.setItem('aov_bgmVolume', bgmVolume);
@@ -912,6 +917,12 @@
             
             <!-- Dashboard Stats (오른쪽) -->
             <div class="flex items-center gap-2 ml-auto text-xs sm:text-sm flex-wrap justify-end">
+                <!-- 모바일 여유자금 배지 (PC에서는 좌측 패널에서 표시되므로 모바일만 표시) -->
+                <div class="rounded-lg px-2 py-1 flex items-center gap-1 lg:hidden" id="mobile-cash-badge" style="background:rgba(15,50,20,0.85);border:1px solid rgba(34,197,94,0.35);">
+                    <span style="color:#9e7a4a;font-size:9px;">💰</span>
+                    <span style="color:#4ade80;font-size:10px;font-weight:700;font-family:monospace;" id="mobile-cash-val">1,000</span>
+                    <span style="color:#6b7280;font-size:9px;">레알</span>
+                </div>
                 <div class="rounded-lg px-3 py-1 flex items-center gap-1.5" style="background:rgba(28,12,2,0.85);border:1px solid rgba(139,90,43,0.5);">
                     <span class="text-slate-400 font-medium">현재 자산:</span>
                     <span class="text-emerald-400 font-bold" id="dashboard-total-assets">1,000</span>
@@ -1014,7 +1025,7 @@
                 Routes of Fortune
             </h2>
             <p class="text-sm sm:text-base font-semibold tracking-wide mb-1.5" style="color:#c8960c;">
-                시즌1: 운명을 건 항해 (3.56v)
+                시즌1: 운명을 건 항해 (3.57v)
             </p>
             <p class="text-slate-400 max-w-2xl text-[11px] sm:text-xs leading-relaxed px-4 mb-3">
                 16세기 미지의 항로를 개척하는 선장들에게 <strong class="text-amber-400">투자</strong>하여 부를 창조하고 명예를 드높이십시오!
@@ -1527,7 +1538,7 @@
             B: { id: "B", name: "골든 하인드 호", captain: "드레이크 선장", cargo: "정향", destination: "몰루카 제도", baseProb: 35, currentProb: 35, baseMult: 3.5, currentMult: 3.5, isUnethical: false, isPirate: true, icon: "fa-leaf", bg: "from-blue-950/50 to-blue-900/10", border: "border-blue-800/60", badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20", history: [50], captainImg: "captain_B.jpg", goodsImg: "goods_B.jpg", flagImg: "flag_B.png", routeImg: "route_B.jpg" },
             C: { id: "C", name: "엘카노의 전함", captain: "엘카노 선장", cargo: "은괴", destination: "페루 포토시", baseProb: 55, currentProb: 55, baseMult: 2.0, currentMult: 2.0, isUnethical: false, icon: "fa-coins", bg: "from-cyan-950/50 to-cyan-900/10", border: "border-cyan-800/60", badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", history: [50], captainImg: "captain_C.jpg", goodsImg: "goods_C.jpg", flagImg: "flag_C.png", routeImg: "route_C.jpg" },
             D: { id: "D", name: "산 프란시스코 호", captain: "고메스 선장", cargo: "감자", destination: "신대륙 연안", baseProb: 75, currentProb: 75, baseMult: 1.2, currentMult: 1.2, isUnethical: false, icon: "fa-wheat-awn", bg: "from-amber-950/50 to-amber-900/10", border: "border-amber-800/60", badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20", history: [50], captainImg: "captain_D.jpg", goodsImg: "goods_D.jpg", flagImg: "flag_D.png", routeImg: "route_D.jpg" },
-            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "아프리카", baseProb: 45, currentProb: 45, baseMult: 7.0, currentMult: 7.0, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
+            E: { id: "E", name: "블랙 에보니 호", captain: "호킨스 선장", cargo: "노예", destination: "아프리카", baseProb: 52, currentProb: 52, baseMult: 7.0, currentMult: 7.0, isUnethical: true, icon: "fa-link", bg: "from-rose-950/50 to-rose-900/10", border: "border-rose-800/60", badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20", history: [50], captainImg: "captain_E.jpg", goodsImg: "goods_E.jpg", flagImg: "flag_E.png", routeImg: "route_E.jpg" },
             F: { id: "F", name: "빅토리아 호", captain: "마젤란 선장", cargo: "비단", destination: "필리핀 항로", baseProb: 25, currentProb: 25, baseMult: 5.0, currentMult: 5.0, isUnethical: false, icon: "fa-scroll", bg: "from-purple-950/50 to-purple-900/10", border: "border-purple-800/60", badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20", history: [50], captainImg: "captain_F.jpg", goodsImg: "goods_F.jpg", flagImg: "flag_F.png", routeImg: "route_F.jpg" },
             G: { id: "G", name: "이스파뇰라 호", captain: "코르테스 선장", cargo: "설탕", destination: "쿠바 식민지", baseProb: 60, currentProb: 60, baseMult: 1.8, currentMult: 1.8, isUnethical: false, icon: "fa-cubes-stacked", bg: "from-indigo-950/50 to-indigo-900/10", border: "border-indigo-800/60", badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", history: [50], captainImg: "captain_G.jpg", goodsImg: "goods_G.jpg", flagImg: "flag_G.png", routeImg: "route_G.jpg" },
             H: { id: "H", name: "레반트의 별 호", captain: "피에트로 상인", cargo: "면직물", destination: "베네치아 항구", baseProb: 80, currentProb: 80, baseMult: 1.1, currentMult: 1.1, isUnethical: false, icon: "fa-shirt", bg: "from-slate-900 to-slate-900/40", border: "border-slate-800/60", badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20", history: [50], captainImg: "captain_H.jpg", goodsImg: "goods_H.jpg", flagImg: "flag_H.png", routeImg: "route_H.jpg" }
@@ -1588,12 +1599,12 @@
             },
             {
                 id: 'isotta', name: '이소타', alias: '이탈리아의 낭만 사랑꾼',
-                desc: '선박 1개를 고정 애착 선박으로 지정 — 그 선박 배율 +20%, 성공률 +5%p',
+                desc: '선박 1개를 고정 애착 선박으로 지정. 3·6·9라운드 진입 순간 애착 선박 성공률 +10%p·배율 +5% 보너스 적용. 단, 그 선박은 매수하면 10라운드까지 매도 불가.',
                 unlock: { type: 'playCount', count: 40 }
             },
             {
                 id: 'gideon', name: '기디언', alias: '영국의 독실한 청교도',
-                desc: '도덕 점수 +5로 시작 / 최종 정산 시 도덕 점수 1점당 300레알 획득 / 0라운드 시작과 동시에 해적선·노예선 즉시 침몰',
+                desc: '도덕 점수 +5로 시작 / 최종 정산 시 도덕 점수 구간별 보너스(0점 이하 또는 0~4점: -2000레알, 5~9점: 점수당 +300레알, 10~14점: 점수당 +400레알, 15점↑: 점수당 +500레알) / 0라운드 시작과 동시에 해적선·노예선 즉시 침몰',
                 unlock: { type: 'ethicsAndAssets', minEthics: 10, minAssets: 15000 }
             },
             {
@@ -1703,6 +1714,15 @@
                 }
 
                 case 'roundEnterCheck': {
+                    // 이소타: 3/6/9라운드 진입 시 애착 선박 성공률 +10%p, 배율 +5%
+                    if (cid === 'isotta' && characterChosenAttachShip && [3,6,9].includes(ctx.round)) {
+                        const aShip = ships[characterChosenAttachShip];
+                        if (aShip && !aShip._ruined) {
+                            aShip.currentProb = Math.min(98, aShip.currentProb + 10);
+                            aShip.currentMult = Math.round(aShip.currentMult * 1.05 * 10) / 10;
+                            setTimeout(() => showCustomAlert(`💘 [이소타] ${aShip.name} ${ctx.round}라운드 보너스! 성공률 +10%p, 배율 +5% 적용`), 400);
+                        }
+                    }
                     // 콘라드: 5라운드 진입 시 선박 1개 반드시 침몰 (게임당 1회)
                     if (cid === 'konrad' && ctx.round === 5 && !konradForcedSinkRound5Done) {
                         konradForcedSinkRound5Done = true;
@@ -1739,10 +1759,23 @@
                 }
 
                 case 'resultFinalize': {
-                    // 기디언: 최종 정산 시 도덕 점수 1점당 300레알 획득
+                    // 기디언: 도덕 점수 구간별 차등 보너스
                     if (cid === 'gideon') {
-                        const bonus = Math.max(0, Math.round(ethicalScore * 300));
-                        return ctx.baseAssets + bonus;
+                        let bonus = 0;
+                        const sc = ethicalScore;
+                        if (sc < 0) {
+                            bonus = -2000; // 음수: 최종 자산 -2000레알
+                        } else if (sc <= 4) {
+                            bonus = -2000; // 0~4점: 최종 자산 -2000레알
+                        } else if (sc <= 9) {
+                            bonus = Math.round(sc * 300); // 5~9점: 점수당 300레알
+                        } else if (sc <= 14) {
+                            bonus = Math.round(sc * 400); // 10~14점: 점수당 400레알
+                        } else {
+                            bonus = Math.round(sc * 500); // 15점 이상: 점수당 500레알
+                        }
+                        const result = ctx.baseAssets + bonus;
+                        return Math.max(0, result);
                     }
                     return ctx.baseAssets;
                 }
@@ -2474,6 +2507,36 @@
                     }
                 }
             }
+
+            ,
+            {
+                title: "바다 위의 무법지대",
+                desc: "해상에서 벌어지는 비도덕적 행위에 대한 국가의 감시가 느슨해졌습니다. 노예선과 정향선이 각광받습니다.",
+                impact: (s) => {
+                    s.E.currentProb += 8; s.E.currentMult += 0.5;  // 노예선 소폭 이득
+                    s.B.currentProb += 8; s.B.currentMult += 0.5;  // 정향선 소폭 이득
+                }
+            },
+            {
+                title: "노예 매매 제도 법제화 추진",
+                desc: "노예선이 합법의 영역으로 제도화되려고 합니다. 노예선 및 노예를 활용한 생산품에 대한 투자 심리가 크게 상승합니다.",
+                impact: (s) => {
+                    s.E.currentProb += 18; s.E.currentMult += 2.0;  // 노예선 큰 이득
+                    s.G.currentProb += 5; s.G.currentMult += 0.2;   // 사탕수수 소폭 이득
+                    s.C.currentProb += 5; s.C.currentMult += 0.2;   // 은 소폭 이득
+                }
+            },
+            {
+                title: "해군과의 해적의 부당거래",
+                desc: "왕실의 해군 제독이 해적단에게 자금을 받아 챙기고 단속을 대폭 완화했습니다. 정향선의 주가가 크게 상승하지만 대서양을 이용하는 합법적 무역은 오히려 위축됩니다.",
+                impact: (s) => {
+                    s.B.currentProb += 18; s.B.currentMult += 1.5;  // 정향선 큰 이득
+                    s.G.currentProb -= 8; s.G.currentMult -= 0.2;   // 사탕수수 소폭 하락
+                    s.C.currentProb -= 8; s.C.currentMult -= 0.2;   // 은 소폭 하락
+                    s.D.currentProb -= 8;                            // 감자 소폭 하락
+                    s.A.currentProb -= 8;                            // 후추 소폭 하락
+                }
+            }
         ];
 
 
@@ -2740,19 +2803,27 @@
             modal.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:380px;padding:24px;text-align:center;">
                 <div style="font-size:28px;margin-bottom:6px;">💘</div>
                 <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:10px;">이소타 — 고정 애착 선박 선택</div>
-                <div style="font-size:11px;color:#9e7a4a;margin-bottom:14px;">평생 한 선박만을 사랑하기로 했습니다. 그 선박의 배율 +20%, 성공률 +5%p.</div>
+                <div style="font-size:11px;color:#9e7a4a;margin-bottom:14px;line-height:1.7;">
+                    💘 애착 선박 효과 안내<br>
+                    • 3·6·9라운드 <b style="color:#f59e0b;">진입 순간</b> 성공률 +10%p, 배율 +5% 자동 적용<br>
+                    • 단, 애착 선박을 <b style="color:#f87171;">매수하면 10라운드까지 매도 불가</b>
+                </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">${shipBtns}</div>
             </div>`;
             document.body.appendChild(modal);
         }
         function confirmAttachShip(shipId) {
-            characterChosenAttachShip = shipId;
-            ships[shipId].currentMult = Math.round(ships[shipId].currentMult * 1.2 * 10) / 10;
-            ships[shipId].currentProb = Math.min(98, ships[shipId].currentProb + 5);
             const modal = document.getElementById('attach-ship-modal');
-            if (modal) modal.remove();
-            showCustomAlert(`💘 [이소타] ${ships[shipId].name}을(를) 고정 애착 선박으로 지정했습니다!`);
-            updateUI();
+            showGameConfirm(
+                `💘 ${ships[shipId].name}(${ships[shipId].cargo})을(를) 애착 선박으로 지정할까요?\n\n• 3·6·9라운드 진입 시 성공률 +10%p, 배율 +5% 보너스\n• 이 선박을 매수하면 10라운드까지 매도 불가\n\n한번 지정하면 변경할 수 없습니다.`,
+                function() {
+                    characterChosenAttachShip = shipId;
+                    if (modal) modal.remove();
+                    showCustomAlert(`💘 [이소타] ${ships[shipId].name}을(를) 애착 선박으로 지정했습니다!`);
+                    updateUI();
+                },
+                { icon: '💘', title: '애착 선박 지정 확인', confirmLabel: '지정하기', cancelLabel: '다시 선택' }
+            );
         }
 
         async function confirmCharacterAndBeginVoyage() {
@@ -3106,6 +3177,11 @@
                 showCustomAlert("보유하고 계신 이 선단의 주식이 없습니다!");
                 return;
             }
+            // 이소타: 애착 선박 매도 불가 (매수 후 10라운드까지)
+            if (selectedCharacterId === 'isotta' && characterChosenAttachShip === shipId && portfolio[shipId] > 0) {
+                showCustomAlert(`💘 [이소타] 애착 선박(${ships[shipId].name})은 10라운드까지 매도할 수 없습니다!`);
+                return;
+            }
 
             qty = Math.min(qty, portfolio[shipId]);
             const currentPrice = calculateSharePrice(ships[shipId]);
@@ -3136,6 +3212,11 @@
 
         function sellAllOfShip(shipId) {
             if (portfolio[shipId] <= 0) return;
+            // 이소타: 애착 선박 매도 불가
+            if (selectedCharacterId === 'isotta' && characterChosenAttachShip === shipId) {
+                showCustomAlert(`💘 [이소타] 애착 선박(${ships[shipId].name})은 10라운드까지 매도할 수 없습니다!`);
+                return;
+            }
             const currentPrice = calculateSharePrice(ships[shipId]);
             const totalSellAmount = portfolio[shipId] * currentPrice;
             cash += totalSellAmount;
@@ -4129,6 +4210,8 @@
         function updateUI() {
             const totalWealth = calculateTotalAssets();
             document.getElementById('dashboard-total-assets').textContent = totalWealth.toLocaleString();
+            const mobileCashEl = document.getElementById('mobile-cash-val');
+            if (mobileCashEl) mobileCashEl.textContent = Math.round(cash).toLocaleString();
             // 포트폴리오 패널 내 총 자산 업데이트
             const statTotal = document.getElementById('stat-total-assets');
             if (statTotal) statTotal.textContent = totalWealth.toLocaleString();
@@ -4511,9 +4594,16 @@
             try {
                 JSON.parse(localStorage.getItem(myTitlesKeyEarly) || '[]').forEach(t => {
                     const title = t.title || t;
-                    if (title && !COLLECTION_META_TITLES.has(title)) existingTitleNames.add(title);
+                    if (title) existingTitleNames.add(title);
                 });
             } catch(e) {}
+
+            // 항해 실패 선박 _ruined 마킹 (크라켄 칭호 등 성공 여부 판정에 필요)
+            voyageResults.forEach(function(vr) {
+                if (!vr.isSuccessful && ships[vr.shipId]) {
+                    ships[vr.shipId]._ruined = true;
+                }
+            });
 
             // 30가지 칭호 판정 (우선순위 높은 것부터 매칭되는 첫 칭호 채택)
             const earnedTitles = determineTitles({
@@ -4868,8 +4958,9 @@
 
             // ---- [I] 칭호 개수 칭호 (이번 판 신규 획득분 포함, 도달한 모든 구간 전부 획득) ----
             const newDistinctEarnedCount = new Set(earned.map(t => t.title)).size;
-            const projectedTitleCount = existingTitleCount + newDistinctEarnedCount;
-            const pcSuffix = ` (현재 ${projectedTitleCount}/70, 칭호 수집 관련 칭호는 집계에서 제외)`;
+            const projectedTitleCount = existingTitleCount + newDistinctEarnedCount - earned.filter(t => t.tag === 'I' && existingTitleCount > 0 ? 0 : 0).length;
+            // projectedTitleCount: 기존 보유 칭호 + 이번 판 신규 칭호 (수집 칭호 포함)
+            const pcSuffix = ` (현재 ${projectedTitleCount}/70)`;
             if (projectedTitleCount >= 70) earned.push({ tag:"I", title:"역사의 증인", desc:"칭호 70개! 대항해시대의 모든 영광과 비극을 두 눈으로 직접 목격하고 기록한 역사의 증인입니다." + pcSuffix });
             if (projectedTitleCount >= 55) earned.push({ tag:"I", title:"이 구역 정신 나간 수집가", desc:"칭호 55개! 이 구역에서 가장 정신 나간 수집가로 인정합니다." + pcSuffix });
             if (projectedTitleCount >= 45) earned.push({ tag:"I", title:"칭호 박물관 관장", desc:"칭호 45개를 모아 박물관을 차려도 될 수준에 도달했습니다." + pcSuffix });
@@ -4911,7 +5002,7 @@
                 ? [...new Set(data.titles)]
                 : (data.allTitles ? [...new Set(data.allTitles.split(' / ').map(s => s.trim()).filter(Boolean))] : [data.title]);
             const payload = {
-                timestamp: new Date().toISOString(),
+                timestamp: getKSTTimestamp(),
                 playerClass: data.playerClass,
                 playerNumber: data.playerNumber,
                 playerName: data.playerName,
@@ -5580,7 +5671,7 @@
             { type:'small_gain',   label:'소확행',         desc:'자본 300 레알을 즉시 획득합니다.' },
             { type:'immunity',     label:'부정 조사 면제', desc:'이번 라운드에 비윤리 선박에 투자해도 도덕지수 패널티를 얻지 않습니다.' },
             { type:'insurance',    label:'보험',           desc:'투자했다가 침몰한 선박 1척에 사용하면 투자금의 50%를 돌려받습니다.' },
-            { type:'disaster',     label:'대형 사고',      desc:'⚠️ 불운! 다음 라운드(혹은 돌발 상황)로 넘어가는 순간, 보유 중인 선박 한 척이 무작위로 강제 침몰합니다. 피할 수 없습니다.' },
+            { type:'disaster',     label:'대형 사고',      desc:'⚠️ 불운! 다음 라운드(혹은 돌발 상황)로 넘어가는 순간, 선박 한 척이 무작위로 강제 침몰합니다. 피할 수 없습니다.' },
         ];
 
         // 로컬 스토리지에서 부여된 레벨 로드 (하위호환용)
@@ -5835,7 +5926,7 @@
             const nextCount = papalDonationCount + 1;
             const nextCost = Math.min(nextCount + 1, 10) * 100;
             showGameConfirm(
-                `기부 금액: ${cost.toLocaleString()} 레알\n효과: 도덕 점수 +1점 회복\n\n현재 도덕 점수: ${ethicalScore.toFixed(2)}점\n기부 후 점수: ${(ethicalScore + 1).toFixed(2)}점\n\n※ 다음 기부 비용: ${nextCost.toLocaleString()} 레알 (10회 이상은 1,000 고정)`,
+                `기부 횟수: ${papalDonationCount} ▶ ${papalDonationCount + 1}회\n기부 금액: ${cost.toLocaleString()} 레알\n효과: 도덕 점수 +1점 회복\n\n현재 도덕 점수: ${ethicalScore.toFixed(2)}점\n기부 후 점수: ${(ethicalScore + 1).toFixed(2)}점\n\n※ 다음 기부 비용: ${nextCost.toLocaleString()} 레알 (10회 이상은 1,000 고정)`,
                 function() {
                     if (cash < cost) {
                         showCustomAlert(`💸 기부할 ${cost.toLocaleString()} 레알이 부족합니다!`);
@@ -6012,7 +6103,7 @@
                         ${sunkOwned.map(id => `
                         <button onclick="applyInsurance('${id}', ${idx}, this)"
                             style="background:rgba(200,150,12,0.15);border:1px solid rgba(200,150,12,0.4);border-radius:8px;padding:8px 12px;color:#e8d5a3;font-weight:700;font-size:12px;cursor:pointer;">
-                            💀 ${ships[id].name} (투자금 ${Math.round(portfolio[id]*avgCost[id]).toLocaleString()} 레알 → 50% 환급)
+                            💀 ${ships[id].name} (원금 ${Math.round(portfolio[id]*avgCost[id]).toLocaleString()} 레알 → 50%= ${Math.round(portfolio[id]*avgCost[id]*0.5).toLocaleString()} 레알 환급)
                         </button>`).join('')}
                     </div>
                     <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(60,50,40,0.8);color:#9e7a4a;border:1px solid rgba(100,80,60,0.4);border-radius:8px;padding:8px 20px;font-weight:700;font-size:12px;cursor:pointer;">취소</button>
@@ -6124,10 +6215,12 @@
             const eff = drawnEffects[idx];
             if (!eff) return;
             eff._used = true;
-            const refund = Math.round(portfolio[shipId] * avgCost[shipId] * 0.5);
+            // 보험: 평단가 × 보유 주수 = 실제 투자금의 50% 환급 (침몰 후 주가 0이 아닌 투자 원금 기준)
+            const investedAmt = portfolio[shipId] * avgCost[shipId];
+            const refund = Math.round(investedAmt * 0.5);
             cash += refund;
             playSound('golden_key');
-            showCustomAlert(`🛡️ [보험] ${ships[shipId].name} 투자금의 50%인 ${refund.toLocaleString()} 레알 환급!`);
+            showCustomAlert(`🛡️ [보험] ${ships[shipId].name}\n투자 원금 ${Math.round(investedAmt).toLocaleString()} 레알의 50% → ${refund.toLocaleString()} 레알 환급!`);
             updateUI();
             renderDrawnEffects();
         }
@@ -6187,7 +6280,7 @@
                 const newEff = { ...effect, _used: false };
                 drawnEffects.push(newEff);
                 renderDrawnEffects();
-                showCustomAlert(`🗝️ [대형 사고] ⚠️ 불운이 닥쳤습니다! 다음 라운드(혹은 돌발 상황)로 넘어가는 순간, 보유 중인 선박 한 척이 무작위로 강제 침몰합니다.`);
+                showCustomAlert(`🗝️ [대형 사고] ⚠️ 불운이 닥쳤습니다! 다음 라운드(혹은 돌발 상황)로 넘어가는 순간, 선박 한 척이 무작위로 강제 침몰합니다.`);
                 return;
             }
             // 즉시 현금 효과 — 뽑자마자 바로 적용
@@ -6408,7 +6501,7 @@
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({
-                            timestamp:    new Date().toISOString(),
+                            timestamp:    getKSTTimestamp(),
                             playerClass:  playerClass,
                             playerNumber: playerNumber,
                             playerName:   playerName,
@@ -6610,15 +6703,15 @@
             {title:"티끌 모아 태산 진행중", rarity:8, hint:"누적 자본 10,000 레알 이상"},
             {title:"첫 곳간을 채운 자", rarity:3, hint:"누적 자본 3,000 레알 이상"},
             // 칭호 개수 칭호
-            {title:"역사의 증인", rarity:113, hint:"칭호 70개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"이 구역 정신 나간 수집가", rarity:95, hint:"칭호 55개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"칭호 박물관 관장", rarity:80, hint:"칭호 45개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"웬만한 건 다 해본 자", rarity:60, hint:"칭호 35개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"칭호 욕심쟁이", rarity:45, hint:"칭호 25개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"제법 모았음", rarity:25, hint:"칭호 18개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"수집 본능 각성", rarity:15, hint:"칭호 12개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"칭호 수집 입문자", rarity:8, hint:"칭호 6개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
-            {title:"칭호 첫걸음", rarity:3, hint:"칭호 3개 이상 보유 (칭호 수집 관련 칭호는 제외)"},
+            {title:"역사의 증인", rarity:113, hint:"칭호 70개 이상 보유"},
+            {title:"이 구역 정신 나간 수집가", rarity:95, hint:"칭호 55개 이상 보유"},
+            {title:"칭호 박물관 관장", rarity:80, hint:"칭호 45개 이상 보유"},
+            {title:"웬만한 건 다 해본 자", rarity:60, hint:"칭호 35개 이상 보유"},
+            {title:"칭호 욕심쟁이", rarity:45, hint:"칭호 25개 이상 보유"},
+            {title:"제법 모았음", rarity:25, hint:"칭호 18개 이상 보유"},
+            {title:"수집 본능 각성", rarity:15, hint:"칭호 12개 이상 보유"},
+            {title:"칭호 수집 입문자", rarity:8, hint:"칭호 6개 이상 보유"},
+            {title:"칭호 첫걸음", rarity:3, hint:"칭호 3개 이상 보유"},
         ];
 
         function showRouteModal(shipId) {
@@ -6746,8 +6839,8 @@
                 const displayName = isLoggedIn ? (name || '나') : '나';
                 let rows = '';
                 const sortedTitles = ALL_TITLES_LIST.slice().sort(function(a, b) { return b.rarity - a.rarity; });
-                // [I]군(칭호 수집 칭호) 집계용 보유 개수 — 자기참조 메타칭호 제외하고 계산
-                const collectionOwnedCount = Array.from(myTitleSet).filter(function(t){ return !COLLECTION_META_TITLES.has(t); }).length;
+                // [I]군(칭호 수집 칭호) 집계용 보유 개수 — 수집 칭호도 포함
+                const collectionOwnedCount = Array.from(myTitleSet).length;
                 sortedTitles.forEach(function(entry) {
                     const rl = getTitleRarityLabel(entry.rarity);
                     const owned = isLoggedIn && myTitleSet.has(entry.title);
@@ -6755,7 +6848,7 @@
                     if (COLLECTION_META_TITLES.has(entry.title)) {
                         const m = /([0-9]+)개 이상 보유/.exec(entry.hint || '');
                         const threshold = m ? m[1] : '?';
-                        hintText = '📋 획득 조건: 칭호 ' + threshold + '개 이상 보유 (칭호 수집 관련 칭호는 제외) — 현재 ' + collectionOwnedCount + '/' + threshold;
+                        hintText = '📋 획득 조건: 칭호 ' + threshold + '개 이상 보유 — 현재 ' + collectionOwnedCount + '/' + threshold;
                     }
                     rows += '<div data-hint="' + hintText.replace(/"/g, '&quot;') + '" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:' + (owned ? 'rgba(200,150,12,0.12)' : 'rgba(0,0,0,0.15)') + ';opacity:' + (owned ? '1' : '0.38') + ';cursor:help;">'
                       + '<span style="min-width:32px;font-size:9px;font-weight:900;color:'+rl.color+';background:'+rl.color+'22;border:1px solid '+rl.color+'44;border-radius:3px;padding:1px 4px;text-align:center;">['+rl.label+']</span>'
