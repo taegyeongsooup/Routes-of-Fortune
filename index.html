@@ -486,6 +486,17 @@
             outline: none;
         }
         input::placeholder { color: #5c3d11 !important; }
+        /* 모바일 전용: 수량 입력칸(qty-*)의 네이티브 스피너(위아래 화살표) 제거. PC는 그대로 유지. */
+        @media (max-width: 639px) {
+            input[type="number"][id^="qty-"]::-webkit-outer-spin-button,
+            input[type="number"][id^="qty-"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type="number"][id^="qty-"] {
+                -moz-appearance: textfield;
+            }
+        }
         /* 아이보리 패널 내부 텍스트 색상 */
         [style*="#f5edd6"] .text-slate-400,
         [style*="#f5edd6"] .text-slate-500 { color: #7a5c2e !important; }
@@ -3053,7 +3064,9 @@
         function calculateSharePrice(ship) {
             if (ship._ruined) return 0;
             if (currentRound === 0) {
-                return 50; // 준비 단계에서는 무조건 50레알 고정가 보장
+                // 4bag(바그다드의 저울) 장착 시 매수/매도가 모두 30레알로 고정 (매수 평단가만 30으로 고정하면
+                // 시장가는 50레알로 남아있어 사자마자 되팔아 차익을 무한 복제할 수 있는 버그가 있었음)
+                return (equippedRelicId === '4bag') ? 30 : 50; // 준비 단계 고정가
             }
             const probFactor = ship.currentProb / ship.baseProb;
             const multFactor = ship.currentMult / ship.baseMult;
@@ -3539,7 +3552,7 @@
 
                 // ── buyPrice: 매수 가격 결정 시 ──────────────────────
                 case 'buyPrice': {
-                    // 4bag: 바그다드의 저울 — 0라운드 평단가 30레알 고정
+                    // 4bag: 바그다드의 저울 — 0라운드 매수/매도가 모두 30레알 고정 (매도가는 calculateSharePrice에서 처리)
                     if (rid === '4bag' && currentRound === 0) {
                         return { price: 30 };
                     }
@@ -6250,7 +6263,7 @@
             {
                 id: '4bag', name: '바그다드의 저울', icon: '⚖️',
                 grade: 'bronze', rarity: 'bronze', price: 0, default: true,
-                shortDesc: '0라운드 모든 선박 매수 평단가 30레알 고정',
+                shortDesc: '0라운드 모든 선박 매수·매도가 30레알로 고정',
                 desc: '아바스 왕조에서 상업 활동에 사용하던 저울.'
             },
             // ── 실버 (4종, 50,000~200,000레알) ────────────────────────
@@ -6644,7 +6657,7 @@
                 modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;padding:16px;';
                 modal.innerHTML = `
                 <div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:320px;padding:24px;text-align:center;">
-                    <div style="font-size:32px;margin-bottom:8px;">${relic.icon}</div>
+                    <div style="margin-bottom:8px;display:flex;justify-content:center;">${relicImgTag(relic, 44, '')}</div>
                     <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:6px;">${relic.name} 해금</div>
                     <div style="font-size:12px;color:#e8d5a3;line-height:1.6;margin-bottom:6px;">${relic.desc}</div>
                     <div style="font-size:13px;color:#fcd34d;font-weight:900;margin-bottom:16px;">
@@ -8847,7 +8860,7 @@
                     const m = document.createElement('div');
                     m.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;padding:16px;';
                     m.innerHTML = `<div style="background:linear-gradient(145deg,#1c0e02,#2c1a04);border:2px solid rgba(200,150,12,0.5);border-radius:16px;width:100%;max-width:300px;padding:22px;text-align:center;">
-                        <div style="font-size:30px;margin-bottom:6px;">${relic.icon}</div>
+                        <div style="margin-bottom:6px;display:flex;justify-content:center;">${relicImgTag(relic, 40, '')}</div>
                         <div style="font-weight:900;font-size:14px;color:#f59e0b;margin-bottom:8px;">${relic.name} 해금</div>
                         <div style="font-size:12px;color:#fcd34d;font-weight:900;margin-bottom:14px;">${relic.price.toLocaleString()} 레알 차감</div>
                         <div style="display:flex;gap:8px;justify-content:center;">
