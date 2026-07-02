@@ -1150,7 +1150,7 @@
                 </div>
                 <div>
                     <h1 class="header-title text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400">
-                        ROUTES OF FORTUNE <span style="font-size:8px;color:#7a5c2e;font-weight:700;letter-spacing:0;-webkit-text-fill-color:#7a5c2e;">v3.70</span>
+                        ROUTES OF FORTUNE <span style="font-size:8px;color:#7a5c2e;font-weight:700;letter-spacing:0;-webkit-text-fill-color:#7a5c2e;">v3.71</span>
                     </h1>
                     <p class="text-[9px] uppercase tracking-widest font-semibold hidden sm:block" style="color:#9e7a4a;">신항로 개척, 운명을 건 항해에 투자하라!</p>
                 </div>
@@ -1201,7 +1201,7 @@
                     <i class="fa-solid fa-ship text-xs animate-pulse" style="display:none;"></i>
                 </div>
                 <h1 class="header-title text-[11px] font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 shrink-0">
-                    ROUTES OF FORTUNE <span style="font-size:7px;color:#7a5c2e;font-weight:700;-webkit-text-fill-color:#7a5c2e;">v3.70</span>
+                    ROUTES OF FORTUNE <span style="font-size:7px;color:#7a5c2e;font-weight:700;-webkit-text-fill-color:#7a5c2e;">v3.71</span>
                 </h1>
                 <div id="player-info-badge-mobile" style="display:none;background:rgba(200,150,12,0.13);border:1px solid rgba(200,150,12,0.40);border-radius:6px;padding:0 9px;line-height:1;height:22px;box-sizing:border-box;flex-shrink:0;display:inline-flex;align-items:center;font-family:inherit;">
                     <span style="font-size:9px;color:#9e7a4a;font-weight:700;" id="player-info-class-mobile"></span>
@@ -1294,7 +1294,7 @@
                 Routes of Fortune
             </h2>
             <p class="text-sm sm:text-base font-semibold tracking-wide mb-1.5" style="color:#c8960c;">
-                시즌1: 운명을 건 항해 (3.70v)
+                시즌1: 운명을 건 항해 (3.71v)
             </p>
             <p class="text-slate-400 max-w-2xl text-[11px] sm:text-xs leading-relaxed px-4 mb-3">
                 16세기 미지의 항로를 개척하는 선장들에게 <strong class="text-amber-400">투자</strong>하여 부를 창조하고 명예를 드높이십시오!
@@ -1449,9 +1449,9 @@
                 <span class="text-[12px] sm:text-[14px]" style="color:#7a5c2e;">레알</span>
             </div>
 
-            <!-- 유물 카드 — 모바일 3열, PC 3열 (크게) -->
-            <div id="relic-select-card-grid" class="w-full px-3 sm:px-6 mb-3 sm:mb-5"
-                style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <!-- 유물 카드 — 모바일 1열(가로형 리스트), PC 3열(기존 중앙정렬 카드). Tailwind sm: 브레이크포인트(CSS)로만 분기 -->
+            <div id="relic-select-card-grid" class="w-full px-3 sm:px-6 mb-3 sm:mb-5 grid grid-cols-1 sm:grid-cols-3"
+                style="gap:10px;">
                 <!-- JS로 동적 렌더링 -->
             </div>
 
@@ -1561,7 +1561,7 @@
                         </div>
                         <!-- 장착된 유물 표시 (우측 끝 고정) -->
                         <div id="equipped-relic-display" style="display:none;margin-left:auto;flex-shrink:0;align-items:center;gap:4px;background:rgba(44,26,4,0.12);border:1px solid rgba(139,90,43,0.4);border-radius:8px;padding:0 7px;height:22px;box-sizing:border-box;">
-                            <span id="equipped-relic-icon" style="font-size:12px;"></span>
+                            <div id="equipped-relic-icon" style="display:inline-flex;align-items:center;"></div>
                             <span id="equipped-relic-name" style="font-size:8px;font-weight:700;color:#9e7a4a;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;"></span>
                         </div>
                     </div>
@@ -1895,6 +1895,7 @@
         let hasAllInHistory = false; // Checks if player ever put >85% assets in 1 ship
         // 신규 캐릭터 해금 판정용 추적 변수 — shipSunk 훅(applyGlobalMarketFluctuations 등)에서 갱신됨
         let shipsSunkBeforeRound7Count = 0; // 반 데르베크: 7라운드가 되기 전(currentRound < 7)에 침몰한 선박 수
+        let totalShipsSunkThisGame = 0; // "운명을 거스르는 자" 칭호 판정용 — 사자의 서로 부활해도 감소하지 않는 이번 판 누적 침몰 발생 횟수
         let slaveShipSunkThisGame = false; // 키미야: 이번 판에 노예선(E)이 침몰했는지 여부
         let everInvestedShipIds = new Set(); // 마누엘: 게임 중 한 번이라도 매수한 적 있는 선박 id 전체(매도해도 유지)
         let pendingReviveShips = []; // 사자의 서: 라운드 진입 시 부활 팝업 대기 중인 침몰 선박 목록
@@ -2114,6 +2115,24 @@
         function trackShipSunk(shipId) {
             if (currentRound < 7) shipsSunkBeforeRound7Count++;
             if (shipId === 'E') slaveShipSunkThisGame = true;
+            totalShipsSunkThisGame++;
+        }
+
+        // 강제 침몰(캐릭터 효과·돌발 이벤트 등)을 포함한 모든 침몰 경로를 한곳으로 통일.
+        // _ruined를 직접 true로 바꾸던 기존 코드들이 trackShipSunk/캐릭터효과/유물효과 훅을 누락해
+        // 나타라자 청동상(1nat) 등 "선박 침몰 시" 발동 유물이 강제 침몰에는 반응하지 않던 버그를 수정.
+        function sinkShip(shipId) {
+            const s = ships[shipId];
+            if (!s || s._ruined) return; // 이미 침몰한 선박은 중복 카운트 방지
+            s._ruined = true;
+            s.currentProb = 0;
+            trackShipSunk(shipId);
+            applyCharacterEffect('shipSunk', { shipId });
+            applyRelicEffect('shipSunk', { shipId });
+            if (equippedRelicId === '4book') {
+                pendingReviveShips = pendingReviveShips || [];
+                pendingReviveShips.push(shipId);
+            }
         }
 
         // 도덕 점수 감점 래퍼 — 비잔티움의 엔콜피온 장착 시 절반만 감점
@@ -2150,10 +2169,10 @@
                         ships.E.currentMult = Math.max(0.3, Math.round(ships.E.currentMult * 0.8 * 10) / 10);
                     } else if (cid === 'gideon') {
                         ethicalScore += 5;
-                        ships.B._ruined = true; ships.B.currentProb = 0;
-                        ships.E._ruined = true; ships.E.currentProb = 0;
+                        sinkShip('B');
+                        sinkShip('E');
                     } else if (cid === 'andrea') {
-                        ships.H._ruined = true; ships.H.currentProb = 0;
+                        sinkShip('H');
                     } else if (cid === 'aguirre') {
                         ships.E.currentMult = 10.0;
                         ships.B.currentMult = Math.round((ships.B.currentMult + 5.0) * 10) / 10;
@@ -2206,8 +2225,7 @@
                         const candidates = Object.keys(ships).filter(id => !ships[id]._ruined);
                         if (candidates.length > 0) {
                             const target = candidates[Math.floor(Math.random() * candidates.length)];
-                            ships[target]._ruined = true;
-                            ships[target].currentProb = 0;
+                            sinkShip(target);
                             setTimeout(() => showCustomAlert(`⚔️ [콘라드] 5라운드 진입과 동시에 ${ships[target].name}이(가) 강제로 침몰했습니다!`), 400);
                         }
                     }
@@ -2720,14 +2738,12 @@
                     const targets = ['E', 'B'].filter(id => !s[id]._ruined);
                     if (targets.length === 0) return;
                     if (targets.length === 1) {
-                        s[targets[0]]._ruined = true;
-                        s[targets[0]].currentProb = 0;
+                        sinkShip(targets[0]);
                         return;
                     }
                     const shuffled = targets.slice().sort(() => Math.random() - 0.5);
                     const sunkId = shuffled[0], hitId = shuffled[1];
-                    s[sunkId]._ruined = true;
-                    s[sunkId].currentProb = 0;
+                    sinkShip(sunkId);
                     s[hitId].currentProb -= 30; s[hitId].currentMult -= 1.0;
                 }
             },
@@ -3565,7 +3581,7 @@
                     const rs = RELIC_RARITY_STYLE[r.rarity];
                     wrap.style.display = 'inline-flex';
                     wrap.style.borderColor = rs.border;
-                    iconEl.textContent = r.icon;
+                    iconEl.innerHTML = relicImgTag(r, 16, 'border-radius:4px;');
                     nameEl.textContent = r.name;
                     // 툴팁 이벤트
                     wrap.onmouseenter = (e) => showRelicTooltip(r, e);
@@ -3579,35 +3595,61 @@
             wrap.onmouseleave = null;
         }
 
+        function showRelicTooltipById(id, e) {
+            const r = RELIC_DATA.find(x => x.id === id);
+            if (r) showRelicTooltip(r, e);
+        }
+
         function showRelicTooltip(r, e) {
             hideRelicTooltip();
+
             const rs = RELIC_RARITY_STYLE[r.rarity];
             const tip = document.createElement('div');
             tip.id = 'relic-tooltip';
-            tip.style.cssText = `position:fixed;z-index:9999;background:linear-gradient(135deg,rgba(20,10,0,0.98),rgba(34,18,2,0.97));border:1px solid ${rs.border};border-radius:12px;padding:12px 14px;max-width:260px;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.7);`;
+            tip.style.cssText = `position:fixed;z-index:9999;background:linear-gradient(135deg,rgba(20,10,0,0.98),rgba(34,18,2,0.97));border:1px solid ${rs.border};border-radius:12px;padding:12px 14px;max-width:280px;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.7);`;
             tip.innerHTML = `
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                    <span style="font-size:22px;">${r.icon}</span>
+                    <div style="flex-shrink:0;">${relicImgTag(r, 32, 'border-radius:6px;')}</div>
                     <div>
                         <div style="font-size:10px;font-weight:700;color:${rs.color};">${rs.label}</div>
                         <div style="font-size:13px;font-weight:900;color:#e8d5a3;">${r.name}</div>
                     </div>
                 </div>
-                <div style="font-size:10px;color:#9e7a4a;line-height:1.6;border-top:1px solid rgba(139,90,43,0.3);padding-top:6px;">${r.desc}</div>`;
+                <div style="font-size:11px;font-weight:800;color:#f0c987;line-height:1.5;border-top:1px solid rgba(139,90,43,0.3);padding-top:6px;margin-bottom:5px;">⚡ ${r.shortDesc}</div>
+                <div style="font-size:10px;color:#9e7a4a;line-height:1.6;font-style:italic;">${r.desc}</div>`;
             document.body.appendChild(tip);
 
-            const rect = e.currentTarget ? e.currentTarget.getBoundingClientRect() : { right: e.clientX, top: e.clientY };
+            const rect = e && e.currentTarget ? e.currentTarget.getBoundingClientRect() : { right: (e && e.clientX) || window.innerWidth / 2, top: (e && e.clientY) || window.innerHeight / 2 };
             let left = rect.right + 8;
             let top = rect.top;
-            if (left + 270 > window.innerWidth) left = rect.left - 278;
-            if (top + 150 > window.innerHeight) top = window.innerHeight - 160;
+            if (left + 290 > window.innerWidth) left = rect.left - 298;
+            if (left < 4) left = 4;
+            if (top + 190 > window.innerHeight) top = window.innerHeight - 200;
+            if (top < 4) top = 4;
             tip.style.left = `${left}px`;
             tip.style.top = `${top}px`;
+
+            // 터치로 열었을 때만 "바깥 탭하면 닫힘" 처리. 오버레이 div를 따로 깔지 않고 document에 직접
+            // 캡처 단계 리스너를 등록한다 — 오버레이 방식은 게임 화면이 transform:scale로 축소 표시되는
+            // 환경에서 실제 터치 좌표와 오버레이 히트 영역이 어긋나 안 먹히는 경우가 있어 더 안전한 방식으로 교체.
+            // PC 마우스 호버는 mouseleave로만 닫히므로(별도 리스너 불필요) 깜빡임 걱정도 없다.
+            if (e && e.type === 'touchstart') {
+                setTimeout(() => {
+                    document.addEventListener('touchstart', _outsideRelicTooltipCloser, { capture: true, passive: true });
+                    document.addEventListener('click', _outsideRelicTooltipCloser, { capture: true });
+                }, 0);
+            }
+        }
+
+        function _outsideRelicTooltipCloser() {
+            hideRelicTooltip();
         }
 
         function hideRelicTooltip() {
             const tip = document.getElementById('relic-tooltip');
             if (tip) tip.remove();
+            document.removeEventListener('touchstart', _outsideRelicTooltipCloser, { capture: true });
+            document.removeEventListener('click', _outsideRelicTooltipCloser, { capture: true });
         }
 
         async function _executeBeginVoyage() {
@@ -4355,8 +4397,7 @@
             const candidates = Object.keys(ships).filter(id => !ships[id]._ruined);
             if (candidates.length > 0) {
                 const target = candidates[Math.floor(Math.random() * candidates.length)];
-                ships[target]._ruined = true;
-                ships[target].currentProb = 0;
+                sinkShip(target);
                 updateUI();
                 showCustomAlert(`🗝️ [대형 사고] ⚠️ ${ships[target].name}이(가) 무작위로 강제 침몰했습니다!`);
             } else {
@@ -5847,6 +5888,7 @@
             const earned = []; // 획득한 칭호 전부 수집
 
             // ---- [A] 자산 규모 칭호 (도달한 모든 구간 전부 획득, 중첩 가능) ----
+            if (finalAssets >= 500000) earned.push({ tag:"A", title:"가본 적 없는 길", desc:"50만 레알. 그 누구도 걸어본 적 없는 길을 홀로 개척해낸, 우주급의 경지에 도달한 존재입니다." });
             if (finalAssets >= 100000) earned.push({ tag:"A", title:"우주적 진리", desc:"10만 레알. 더 이상 숫자가 아니라 우주의 법칙처럼 여겨지는 경지. 시간과 공간, 시장의 논리마저 초월해 버린 존재입니다." });
             if (finalAssets >= 70000)  earned.push({ tag:"A", title:"부의 창조신", desc:"7만 레알! 부를 그저 쌓는 것이 아니라 창조해내는 신의 영역에 도달했습니다." });
             if (finalAssets >= 50000) earned.push({ tag:"A", title:"바다의 신 포세이돈", desc:"5만 레알! 인류 역사에서 단 한 번도 기록된 적 없는 전설의 수치. 대서양, 인도양, 태평양은 물론 신들의 바다까지 지배한 불멸의 존재. 그대의 이름은 영원히 역사에 새겨질 것입니다." });
@@ -6012,6 +6054,7 @@
             if (playCount >= 1)   earned.push({ tag:"G", title:"열심히 했음 청년", desc:"첫 항해를 끝까지 완수한, 열심히 한 청년입니다." });
 
             // ---- [H] 누적 자본 칭호 (역대 모든 최종 자산의 합산 기준, 도달한 모든 구간 전부 획득) ----
+            if (totalCapitalSum >= 3000000) earned.push({ tag:"H", title:"마르지 않는 샘물", desc:"누적 자본 300만 레알. 아무리 퍼내도 마르지 않는 샘물처럼 끝없이 부를 만들어내는 존재입니다." });
             if (totalCapitalSum >= 500000) earned.push({ tag:"H", title:"먹고 죽어도 남는 돈", desc:"누적 자본 50만 레알! 이제 평생 먹고 죽어도 남을 돈을 쌓아올린 전설의 거상입니다." });
             if (totalCapitalSum >= 300000) earned.push({ tag:"H", title:"이 정도면 가문의 영광", desc:"누적 자본 30만 레알을 넘기며 가문 대대로 자랑할 업적을 세웠습니다." });
             if (totalCapitalSum >= 150000) earned.push({ tag:"H", title:"평생 놀고 먹어도 되는 수준", desc:"누적 자본 15만 레알. 더 이상 일할 필요가 없는 수준에 도달했습니다." });
@@ -6059,8 +6102,25 @@
             // 10. 포화 속으로 - 5척 이상 침몰했음에도 1만 레알 달성
             if (Object.values(ships).filter(s => s._ruined).length >= 5 && finalAssets >= 10000)
                 earned.push({ tag:"J", title:"포화 속으로", desc:"5척 이상의 선박이 침몰하는 참사를 겪으면서도 끝내 1만 레알을 달성해낸 불굴의 생존 전략가입니다." });
+            // 11. [우주급] 고결한 자 - 도덕 25점 이상 + 최종자산 15만 이상
+            if (ethicalScore >= 25 && finalAssets >= 150000)
+                earned.push({ tag:"J", title:"고결한 자", desc:"도덕 점수 25점 이상을 유지하면서도 15만 레알을 달성한, 부와 양심을 모두 거머쥔 고결한 존재입니다." });
+            // 12. [우주급] 운명을 거스르는 자 - 10라운드 내내 선박 침몰 0척 + 최종자산 10만 이상
+            if (totalShipsSunkThisGame === 0 && finalAssets >= 100000)
+                earned.push({ tag:"J", title:"운명을 거스르는 자", desc:"10라운드 내내 단 한 척의 선박도 침몰시키지 않고 10만 레알을 달성한, 운명조차 거스른 자입니다." });
 
             // ---- [I] 칭호 개수 칭호 (이번 판 신규 획득분 포함, 도달한 모든 구간 전부 획득) ----
+            // [신화급] 인싸 - 해금 가능한 모든 캐릭터를 전부 해금했는지 판정.
+            // 캐릭터 해금 조건 중 title 타입(대항해시대 바다의 황제/악마)은 이번 판에 방금 얻은 칭호도 인정해야 하므로
+            // 기존 보유 칭호 + 이번 판 earned 배열의 칭호를 합쳐서 판정한다.
+            {
+                const unlockCtx = buildCharacterUnlockContext();
+                unlockCtx.titleSet = new Set([...unlockCtx.titleSet, ...earned.map(t => t.title)]);
+                const allCharsUnlocked = CHARACTERS.every(c => checkCharacterUnlocked(c, unlockCtx));
+                if (allCharsUnlocked) {
+                    earned.push({ tag:"I", title:"인싸", desc:"이 게임에 등장하는 모든 투자자를 빠짐없이 해금한, 그 누구와도 인연을 놓치지 않은 인싸입니다." });
+                }
+            }
             const newDistinctEarnedCount = new Set(earned.map(t => t.title)).size;
             const projectedTitleCount = existingTitleCount + newDistinctEarnedCount - earned.filter(t => t.tag === 'I' && existingTitleCount > 0 ? 0 : 0).length;
             // projectedTitleCount: 기존 보유 칭호 + 이번 판 신규 칭호 (수집 칭호 포함)
@@ -6093,6 +6153,7 @@
         // ----------------------------------------------------
         async function submitResultToSheet(data) {
             const statusEl = document.getElementById('sheet-submit-status');
+            const mySeq = loginSeq; // 제출 시점의 로그인 세션 스냅샷 (도중 로그아웃/계정전환 대비)
             if (!SHEET_WEBHOOK_URL) {
                 if (statusEl) {
                     statusEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> 스프레드시트 연동 URL이 설정되지 않았습니다.`;
@@ -6131,9 +6192,14 @@
                         statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${titlesArray.length}개 칭호 기록이 명부에 제출되었습니다!`;
                         statusEl.className = "bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2";
                     }
-                    // 항해기금 로컬 캐시 업데이트 (서버에서 payload.finalAssets만큼 적립되므로 로컬도 동기화)
-                    voyageFundCache += Number(payload.finalAssets || 0);
-                    updateVoyageFundDisplay();
+                    // no-cors 모드라 서버가 실제로 처리했는지 응답으로 확인이 불가능함.
+                    // 낙관적으로 로컬에 먼저 더해두되(현재 로그인 계정에만, 세션이 바뀌었으면 폐기),
+                    // 곧바로 서버 값으로 재조회해서 실제 반영 여부를 검증/자기치유한다.
+                    if (mySeq === loginSeq && data.playerClass === playerClass && data.playerNumber === playerNumber && data.playerName === playerName) {
+                        voyageFundCache += Number(payload.finalAssets || 0);
+                        updateVoyageFundDisplay();
+                    }
+                    setTimeout(() => { loadVoyageFund(data.playerClass, data.playerNumber, data.playerName); }, 1500);
                 } catch(e) {
                     if (attempt < 3) {
                         if (statusEl) statusEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> 재시도 중... (${attempt}/3)`;
@@ -6167,100 +6233,100 @@
                 id: '1nat', name: '나타라자 청동상', icon: '🕉️',
                 grade: 'bronze', rarity: 'bronze', price: 0, default: true,
                 shortDesc: '선박 침몰 시마다 400레알 고정 획득 (투자 여부 무관)',
-                desc: '힌두교의 파괴의 신 시바를 묘사한 동상. 선박이 침몰할 때마다 (투자하지 않아도) 400레알을 고정으로 획득한다.'
+                desc: '힌두교의 파괴의 신 시바를 묘사한 동상.'
             },
             {
                 id: '2mik', name: '믹틀란테쿠틀리 조각상', icon: '💀',
                 grade: 'bronze', rarity: 'bronze', price: 0, default: true,
                 shortDesc: '손실 매도 시 손실액의 20% 보전',
-                desc: '아스테카 문명의 지하세계의 신을 조각한 동상. 손실 매도 시, 손실액의 20%를 즉시 보전해준다.'
+                desc: '아스테카 문명의 지하세계의 신을 조각한 동상.'
             },
             {
                 id: '3tang', name: '당삼채', icon: '🏺',
                 grade: 'bronze', rarity: 'bronze', price: 0, default: true,
                 shortDesc: '돌발 상황 진입 시마다 150레알 즉시 획득',
-                desc: '당나라에서 유행한 세 가지 색을 활용한 도자기. 돌발 상황 진입 시마다 150레알을 즉시 획득한다.'
+                desc: '당나라에서 유행한 세 가지 색을 활용한 도자기.'
             },
             {
                 id: '4bag', name: '바그다드의 저울', icon: '⚖️',
                 grade: 'bronze', rarity: 'bronze', price: 0, default: true,
                 shortDesc: '0라운드 모든 선박 매수 평단가 30레알 고정',
-                desc: '아바스 왕조에서 상업 활동에 사용하던 저울. 0라운드(준비단계)에서 모든 선박의 매수 평단가를 30레알로 고정한다.'
+                desc: '아바스 왕조에서 상업 활동에 사용하던 저울.'
             },
             // ── 실버 (4종, 50,000~200,000레알) ────────────────────────
             {
                 id: '1den', name: '데나리우스 은화', icon: '🪙',
                 grade: 'silver', rarity: 'silver', price: 50000,
                 shortDesc: '매도 이익 실현 시 이익의 15% 추가 획득',
-                desc: '로마 제국에서 가장 광범위하게 유통되었던 은화. 매도로 이익 실현 시 이익의 15%를 추가로 획득한다.'
+                desc: '로마 제국에서 가장 광범위하게 유통되었던 은화.'
             },
             {
                 id: '2byz', name: '비잔티움의 엔콜피온', icon: '✝️',
                 grade: 'silver', rarity: 'silver', price: 100000,
                 shortDesc: '도덕 점수 감점 시 절반만 감점',
-                desc: '성 유물을 보관하는 함. 돌발 상황이나 주식 매수로 인한 도덕 점수 감점이 발생할 때, 절반만 감점된다.'
+                desc: '성 유물을 보관하는 함.'
             },
             {
                 id: '3joan', name: '잔 다르크의 깃발', icon: '🚩',
                 grade: 'silver', rarity: 'silver', price: 150000,
                 shortDesc: '3·6·9라운드 진입 시 모든 선박 성공률 +10%p',
-                desc: '백년 전쟁 당시 잔 다르크가 사용했다고 알려진 깃발. 3·6·9라운드 진입 시 모든 선박의 성공률이 +10%p 상승한다.'
+                desc: '백년 전쟁 당시 잔 다르크가 사용했다고 알려진 깃발.'
             },
             {
                 id: '4book', name: '사자의 서', icon: '📜',
                 grade: 'silver', rarity: 'silver', price: 200000,
                 shortDesc: '침몰 선박을 100레알로 성공률 20%로 부활 가능',
-                desc: '고대 이집트에서 미라와 함께 매장한 사후세계를 위한 안내서. 선박이 침몰하면 라운드 진입 시 100레알을 소모해 성공률 20%로 부활시킬 수 있다.'
+                desc: '고대 이집트에서 미라와 함께 매장한 사후세계를 위한 안내서.'
             },
             // ── 골드 (4종, 300,000~600,000레알) ───────────────────────
             {
                 id: '1ben', name: '베냉 장식판', icon: '🟫',
-                grade: 'gold', rarity: 'gold', price: 300000,
+                grade: 'gold', rarity: 'gold', price: 500000,
                 shortDesc: '도덕 15점 이하로 라운드 진입 시 1,000레알 획득',
-                desc: '아프리카 베냉 제국의 왕궁을 꾸민 조각품. 도덕 점수 15점 이하로 라운드(돌발 상황 포함) 진입 시 1,000레알을 즉시 획득한다.'
+                desc: '아프리카 베냉 제국의 왕궁을 꾸민 조각품.'
             },
             {
                 id: '2sal', name: '살리에라 소금통', icon: '🫙',
-                grade: 'gold', rarity: 'gold', price: 400000,
+                grade: 'gold', rarity: 'gold', price: 600000,
                 shortDesc: '라운드 진입 시 10주 이상 투자 선박 1척당 1,000레알',
-                desc: '르네상스 시기 금으로 제작된 예술품. 라운드(돌발 상황 포함) 진입 시 10주 이상 투자 중인 선박 한 척당 1,000레알을 즉시 획득한다.'
+                desc: '르네상스 시기 금으로 제작된 예술품.'
             },
             {
                 id: '3ast', name: '태양의 아스트롤라베', icon: '☀️',
-                grade: 'gold', rarity: 'gold', price: 500000,
+                grade: 'gold', rarity: 'gold', price: 700000,
                 shortDesc: '다음 정세 예측 첩보 확률 55/25/10/10%로 변경',
-                desc: '이슬람교도들이 사용하던 나침반. 다음 정세 예측 카드 4개의 발생 확률을 기존 40/30/20/10%에서 55/25/10/10%로 변경한다. 1번 카드가 실제로 발생할 확률이 크게 높아진다.'
+                desc: '이슬람교도들이 사용하던 나침반.'
             },
             {
                 id: '4fish', name: '어부의 반지', icon: '💍',
-                grade: 'gold', rarity: 'gold', price: 600000,
+                grade: 'gold', rarity: 'gold', price: 800000,
                 shortDesc: '황금열쇠 사용 시 50% 확률로 열쇠 1개 추가 획득',
-                desc: '반지 형태로 된 교황의 인장. 황금열쇠 사용 시 50% 확률로 열쇠 1개를 추가로 획득한다.'
+                desc: '반지 형태로 된 교황의 인장.'
             },
             // ── 프리즘 (4종, 800,000~1,500,000레알) ───────────────────
             {
                 id: '1chil', name: '칠지도', icon: '⚔️',
-                grade: 'prism', rarity: 'prism', price: 800000,
+                grade: 'prism', rarity: 'prism', price: 1000000,
                 shortDesc: '매 라운드 모든 선박 주가 +10레알 (계산 완료 후)',
-                desc: '백제가 일본에 하사한 검. 매 라운드 모든 선박의 주가가 성공률·배율 계산 완료 후 추가로 +10레알 상승한다.'
+                desc: '백제가 일본에 하사한 검.'
             },
             {
                 id: '2rei', name: '라이히스크로네', icon: '👑',
-                grade: 'prism', rarity: 'prism', price: 1000000,
+                grade: 'prism', rarity: 'prism', price: 1500000,
                 shortDesc: '10라운드 항해 판정 성공률을 모두 80%로 적용',
-                desc: '신성 로마 제국 황제의 왕관. 마지막 라운드(10라운드) 항해 판정 시, 모든 선박의 실제 성공률과 무관하게 주사위 성공률을 80%로 적용한다.'
+                desc: '신성 로마 제국 황제의 왕관.'
             },
             {
                 id: '3tc', name: '교황의 삼중관', icon: '⛪',
-                grade: 'prism', rarity: 'prism', price: 1250000,
+                grade: 'prism', rarity: 'prism', price: 2000000,
                 shortDesc: '도덕 10점 이상 라운드 진입 시 점수당 50~200레알 획득',
-                desc: '교황의 권위를 상징하는 화려한 관. 도덕 점수 10점 이상으로 라운드 진입 시, 도덕 점수당 50/100/150/200레알(각 25% 확률 랜덤)을 추가로 획득한다.'
+                desc: '교황의 권위를 상징하는 화려한 관.'
             },
             {
                 id: '4joy', name: '주아이외즈', icon: '🗡️',
-                grade: 'prism', rarity: 'prism', price: 1500000,
+                grade: 'prism', rarity: 'prism', price: 2500000,
                 shortDesc: '10라운드 성공 선박 중 랜덤 1척 수익금 2배 (2척 이상 성공 시)',
-                desc: '프랑크 왕국 카롤루스 대제의 검. 마지막 라운드(10라운드) 항해 성공 선박이 2척 이상일 때, 그 중 랜덤 1척의 수익금(보유 주수 × 현재가)이 2배로 지급된다.'
+                desc: '프랑크 왕국 카롤루스 대제의 검.'
             }
         ];
 
@@ -6416,8 +6482,9 @@
 
             // 등급 그룹 정의 — getTitleRarityLabel 경계값과 정확히 일치
             const GRADE_GROUPS = [
-                { label: '신화 ♾️', color: '#e879f9', bg: 'rgba(232,121,249,0.13)', border: 'rgba(232,121,249,0.5)', min: 140 },
-                { label: 'SSSS 🔱', color: '#00c8ff', bg: 'rgba(0,200,255,0.12)',   border: 'rgba(0,200,255,0.45)',   min: 110, max: 139 },
+                { label: '우주 ♾️', color: '#ffffff', bg: 'rgba(255,255,255,0.10)', border: 'rgba(255,255,255,0.35)', min: 160 },
+                { label: '신화 🔱', color: '#e879f9', bg: 'rgba(232,121,249,0.13)', border: 'rgba(232,121,249,0.5)', min: 140, max: 159 },
+                { label: '왕실 ⚜️', color: '#00c8ff', bg: 'rgba(0,200,255,0.12)',   border: 'rgba(0,200,255,0.45)',   min: 110, max: 139 },
                 { label: 'SSS',     color: '#ff6b35', bg: 'rgba(255,107,53,0.12)',  border: 'rgba(255,107,53,0.45)',  min: 90,  max: 109 },
                 { label: 'SS',      color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.45)',  min: 75,  max: 89  },
                 { label: 'S',       color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.45)', min: 55,  max: 74  },
@@ -6513,10 +6580,14 @@
                 const grayStyle = owned ? '' : 'filter:grayscale(1);opacity:0.45;';
                 const iconHTML = relicImgTag(r, 44, `margin-bottom:4px;${grayStyle}`);
 
-                return `<div style="
+                return `<div
+                    onmouseenter="showRelicTooltipById('${r.id}', event)"
+                    onmouseleave="hideRelicTooltip()"
+                    ontouchstart="event.preventDefault();showRelicTooltipById('${r.id}', event)"
+                    style="
                     background:${owned ? rs.bg : 'rgba(44,26,4,0.05)'};
                     border:1px solid ${owned ? rs.border : 'rgba(139,90,43,0.15)'};
-                    border-radius:10px;padding:10px;text-align:center;
+                    border-radius:10px;padding:10px;text-align:center;cursor:help;
                     ${owned ? '' : 'opacity:0.7;'}">
                     ${iconHTML}
                     <div style="font-size:9px;font-weight:700;color:${rs.color};background:${rs.bg};border:1px solid ${rs.border};border-radius:4px;display:inline-block;padding:0 5px;margin-bottom:3px;">${rs.label}</div>
@@ -6536,18 +6607,22 @@
             list.innerHTML = shopRelics.map(r => {
                 const owned = unlockedRelics.includes(r.id);
                 const rs = RELIC_RARITY_STYLE[r.rarity];
-                return `<div style="background:${owned ? 'rgba(44,26,4,0.06)' : rs.bg};border:1px solid ${owned ? 'rgba(139,90,43,0.2)' : rs.border};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:24px;flex-shrink:0;">${r.icon}</span>
+                return `<div
+                    onmouseenter="showRelicTooltipById('${r.id}', event)"
+                    onmouseleave="hideRelicTooltip()"
+                    ontouchstart="event.preventDefault();showRelicTooltipById('${r.id}', event)"
+                    style="background:${owned ? 'rgba(44,26,4,0.06)' : rs.bg};border:1px solid ${owned ? 'rgba(139,90,43,0.2)' : rs.border};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:help;">
+                    <div style="flex-shrink:0;">${relicImgTag(r, 32, 'border-radius:6px;')}</div>
                     <div style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
                             <span style="font-size:9px;font-weight:700;color:${rs.color};background:${rs.bg};border:1px solid ${rs.border};border-radius:4px;padding:0 4px;">${rs.label}</span>
                             <span style="font-size:11px;font-weight:800;color:#1a0f00;">${r.name}</span>
                         </div>
-                        <div style="font-size:9px;color:#7a5c2e;line-height:1.4;">${r.desc}</div>
+                        <div style="font-size:9px;color:#7a5c2e;line-height:1.4;">${r.shortDesc}</div>
                     </div>
                     ${owned
                         ? `<span style="font-size:10px;font-weight:700;color:#15803d;flex-shrink:0;">✅ 보유</span>`
-                        : `<button onclick="purchaseRelic('${r.id}')"
+                        : `<button onclick="event.stopPropagation();purchaseRelic('${r.id}')"
                             style="flex-shrink:0;background:linear-gradient(135deg,#92400e,#b45309);color:#fcd34d;border:1px solid rgba(200,150,12,0.6);border-radius:8px;padding:5px 10px;font-weight:900;font-size:10px;cursor:pointer;white-space:nowrap;">
                             ${r.price.toLocaleString()} 레알
                           </button>`
@@ -6644,8 +6719,14 @@
 
         // 칭호 희귀도 등급 (숫자 클수록 희귀)
         var TITLE_RARITY = {
+            // 우주 (신화보다 상위 등급, rarity >= 160)
+            "운명을 거스르는 자": 164,
+            "가본 적 없는 길": 163,
+            "고결한 자": 162,
+            "마르지 않는 샘물": 161,
             // 신화 (ALL_TITLES_LIST와 동일하게 동기화 — 누락되면 getTitleRarity가 기본값(5)으로
             // 떨어져서 명예의 전당/레벨 계산에서 최고 등급 칭호가 최하위로 취급되는 버그가 생긴다)
+            "인싸": 146,
             "우주적 진리": 145,
             "보이지 않는 손": 144,
             "악마": 143,
@@ -6832,8 +6913,9 @@
             return { level: level, exp: totalExp, pct: pct, nextLvExp: nextLvExp };
         }
         function getTitleRarityLabel(rarity) {
-            if (rarity >= 140) return { label: '♾️', color: '#e879f9' };
-            if (rarity >= 110) return { label: '🔱', color: '#00c8ff' };
+            if (rarity >= 160) return { label: '♾️', color: '#ffffff' };
+            if (rarity >= 140) return { label: '🔱', color: '#e879f9' };
+            if (rarity >= 110) return { label: '⚜️', color: '#00c8ff' };
             if (rarity >= 90) return { label: 'SSS', color: '#ff6b35' };
             if (rarity >= 75) return { label: 'SS',  color: '#f59e0b' };
             if (rarity >= 55) return { label: 'S',   color: '#a78bfa' };
@@ -7112,6 +7194,7 @@
             hasUnethicalInvestedNow = false;
             hasAllInHistory = false;
             shipsSunkBeforeRound7Count = 0;
+            totalShipsSunkThisGame = 0;
             slaveShipSunkThisGame = false;
             everInvestedShipIds = new Set();
             pendingReviveShips = [];
@@ -8455,7 +8538,13 @@
             "수집 본능 각성", "칭호 수집 입문자", "칭호 첫걸음"
         ]);
         const ALL_TITLES_LIST = [
+            // 우주 (신화보다 상위 등급)
+            {title:"운명을 거스르는 자", rarity:164, hint:"10라운드 내내 선박 침몰 0척 + 최종 자산 100,000 레알 이상 달성"},
+            {title:"가본 적 없는 길", rarity:163, hint:"최종 자산 500,000 레알 이상 달성"},
+            {title:"고결한 자", rarity:162, hint:"도덕 점수 25점 이상 + 최종 자산 150,000 레알 이상 동시 달성"},
+            {title:"마르지 않는 샘물", rarity:161, hint:"누적 자본 3,000,000 레알 이상 달성"},
             // 신화
+            {title:"인싸", rarity:146, hint:"해금 가능한 모든 투자자(캐릭터)를 전부 해금"},
             {title:"우주적 진리", rarity:145, hint:"최종 자산 100,000 레알 이상 달성"},
             {title:"보이지 않는 손", rarity:144, hint:"누적 자본 1,500,000 레알 이상 달성"},
             {title:"신조차 막지 못한 항해", rarity:142, hint:"성공률 10% 이하 선박 3척이 동시에 항해 성공"},
@@ -8855,35 +8944,65 @@
             }
             if (resetLabel) resetLabel.textContent = `다시 뽑기 (${nextCost.toLocaleString()}레알)`;
 
-            // 카드 렌더링 — 모바일은 작게, PC는 크게
-            const isMobileView = window.innerWidth < 640;
-            const cardSize = isMobileView ? 36 : 64;
-            const cardPad = isMobileView ? '12px 8px' : '24px 16px';
-            const nameSize = isMobileView ? '11px' : '18px';
-            const descSize = isMobileView ? '9px' : '14px';
-
+            // 카드 렌더링 — window.innerWidth 같은 JS 폭 감지는 쓰지 않고, 모바일용/PC용 마크업을 둘 다
+            // 만들어서 Tailwind sm: 브레이크포인트(CSS 미디어쿼리)로 전환한다. 이렇게 하면 게임 화면이
+            // transform:scale로 축소 표시되는 환경에서도 실제 CSS 뷰포트 기준으로 항상 정확히 갈린다.
             grid.innerHTML = candidates.map(id => {
                 const r = RELIC_DATA.find(x => x.id === id);
                 if (!r) return '';
                 const rs = RELIC_RARITY_STYLE[r.rarity];
 
                 if (animatingIds) {
-                    const iconHTML = relicImgTag(r, isMobileView ? 32 : 48, `margin-bottom:4px;filter:grayscale(1);opacity:0.4;`);
-                    return `<div style="background:rgba(245,237,214,0.5);border:2px solid rgba(139,90,43,0.2);border-radius:12px;padding:${cardPad};text-align:center;opacity:0.4;">
-                        ${iconHTML}
-                        <div style="font-size:8px;font-weight:700;color:${rs.color};margin-bottom:2px;">${rs.label}</div>
-                        <div style="font-size:${nameSize};font-weight:900;color:#5c3d11;">${r.name}</div>
+                    const mobileIcon = relicImgTag(r, 32, `filter:grayscale(1);opacity:0.4;flex-shrink:0;`);
+                    const pcIcon = relicImgTag(r, 48, `margin-bottom:4px;filter:grayscale(1);opacity:0.4;`);
+                    return `<div style="background:rgba(245,237,214,0.5);border:2px solid rgba(139,90,43,0.2);border-radius:12px;opacity:0.4;">
+                        <div class="flex sm:hidden" style="padding:8px 10px;align-items:center;gap:8px;">
+                            ${mobileIcon}
+                            <div>
+                                <div style="font-size:8px;font-weight:700;color:${rs.color};margin-bottom:1px;">${rs.label}</div>
+                                <div style="font-size:12px;font-weight:900;color:#5c3d11;">${r.name}</div>
+                            </div>
+                        </div>
+                        <div class="hidden sm:block" style="padding:24px 16px;text-align:center;">
+                            ${pcIcon}
+                            <div style="font-size:8px;font-weight:700;color:${rs.color};margin-bottom:2px;">${rs.label}</div>
+                            <div style="font-size:18px;font-weight:900;color:#5c3d11;">${r.name}</div>
+                        </div>
                     </div>`;
                 }
-                const iconHTML = relicImgTag(r, cardSize, 'margin-bottom:6px;');
+
+                // ── 모바일: 가로형 컴팩트 카드 [아이콘+등급] | [이름/능력치/설명] ──
+                const mobileIconHTML = relicImgTag(r, 28, 'flex-shrink:0;');
+                const mobileLayout = `
+                    <div class="flex sm:hidden" style="padding:8px 10px;align-items:flex-start;gap:8px;">
+                        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;width:44px;">
+                            ${mobileIconHTML}
+                            <div style="font-size:8px;font-weight:700;color:${rs.color};background:${rs.bg};border:1px solid ${rs.border};border-radius:3px;padding:0 4px;white-space:nowrap;">${rs.label}</div>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:12px;font-weight:900;color:#1a0f00;margin-bottom:1px;line-height:1.2;">${r.name}</div>
+                            <div style="font-size:10px;font-weight:800;color:#7a5c2e;line-height:1.25;margin-bottom:2px;">⚡ ${r.shortDesc}</div>
+                            <div style="font-size:9px;color:#9e8158;line-height:1.25;font-style:italic;border-top:1px dashed rgba(139,90,43,0.25);padding-top:2px;">${r.desc}</div>
+                        </div>
+                    </div>`;
+
+                // ── PC: 기존 중앙정렬 카드 (아이콘 위, 이름/능력치/설명 아래로 순서대로) ──
+                const pcIconHTML = relicImgTag(r, 64, 'margin-bottom:6px;');
+                const pcLayout = `
+                    <div class="hidden sm:block" style="padding:24px 16px;text-align:center;">
+                        ${pcIconHTML}
+                        <div style="font-size:10px;font-weight:700;color:${rs.color};background:${rs.bg};border:1px solid ${rs.border};border-radius:4px;display:inline-block;padding:1px 5px;margin-bottom:3px;">${rs.label}</div>
+                        <div style="font-size:18px;font-weight:900;color:#1a0f00;margin-bottom:3px;">${r.name}</div>
+                        <div style="font-size:14px;font-weight:800;color:#7a5c2e;line-height:1.4;margin-bottom:4px;">⚡ ${r.shortDesc}</div>
+                        <div style="font-size:12px;color:#9e8158;line-height:1.4;font-style:italic;border-top:1px dashed rgba(139,90,43,0.25);padding-top:4px;">${r.desc}</div>
+                    </div>`;
+
                 return `<button onclick="selectRelicAndBegin('${r.id}')"
-                    style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid ${rs.border};border-radius:12px;padding:${cardPad};cursor:pointer;text-align:center;transition:transform 0.15s,box-shadow 0.15s;width:100%;box-shadow:0 2px 8px rgba(0,0,0,0.08);"
-                    onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 20px ${rs.border}'"
+                    style="background:linear-gradient(145deg,#f5edd6,#ede0c0);border:2px solid ${rs.border};border-radius:12px;cursor:pointer;width:100%;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform 0.15s,box-shadow 0.15s;"
+                    onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 4px 20px ${rs.border}'"
                     onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'">
-                    ${iconHTML}
-                    <div style="font-size:10px;font-weight:700;color:${rs.color};background:${rs.bg};border:1px solid ${rs.border};border-radius:4px;display:inline-block;padding:1px 5px;margin-bottom:3px;">${rs.label}</div>
-                    <div style="font-size:${nameSize};font-weight:900;color:#1a0f00;margin-bottom:3px;">${r.name}</div>
-                    <div style="font-size:${descSize};color:#7a5c2e;line-height:1.4;">${r.shortDesc || r.desc}</div>
+                    ${mobileLayout}
+                    ${pcLayout}
                 </button>`;
             }).join('');
         }
